@@ -1,6 +1,1 @@
-alpine:3.20
-nginx:1.26-alpine
-debian:11
-openjdk:8-jdk-alpine
-eclipse-temurin:17-jdk-alpine
-amazoncorretto:17-alpine-jdk
+openresty/openresty:1.25.3.2-0-alpine
