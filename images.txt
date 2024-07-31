@@ -1,1 +1,1 @@
-eclipse-temurin:17-jdk-alpine
+nginx:1.24-alpine
