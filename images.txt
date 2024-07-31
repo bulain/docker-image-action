@@ -1,3 +1,1 @@
-amazoncorretto:8-alpine-jdk
-amazoncorretto:17-alpine-jdk
-
+eclipse-temurin:8-jdk-alpine
