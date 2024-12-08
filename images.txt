@@ -1,1 +1,1 @@
-nginx:1.26-alpine
+debian:11
