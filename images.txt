@@ -1,9 +1,1 @@
-busybox:1.37-musl
-busybox:1.37-glibc
-alpine:3.21
-debian:12-slim
-debian:12
-nginx:1.24-alpine
-nginx:1.26-alpine
-eclipse-temurin:8-jdk-alpine
-eclipse-temurin:17-jdk-alpine
+dslim/slim:1.40.11
