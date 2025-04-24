@@ -1,1 +1,4 @@
-dslim/slim:1.40.11
+nginx:1.26-alpine
+nginx:1.28-alpine
+percona/percona-xtrabackup:8.0.35-32-aarch64
+percona/percona-xtrabackup:8.0.35-32
