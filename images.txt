@@ -1,20 +1,20 @@
 #busybox:1.37-musl
 #busybox:1.37-glibc
 
-alpine:3.23
+#alpine:3.23
 
-debian:13-slim
-debian:13
+#debian:13-slim
+#debian:13
 
-nginx:1.28-alpine
+#nginx:1.28-alpine
 
-eclipse-temurin:8-jdk-alpine
-eclipse-temurin:17-jdk-alpine
-eclipse-temurin:21-jdk-alpine
+#eclipse-temurin:8-jdk-alpine
+#eclipse-temurin:17-jdk-alpine
+#eclipse-temurin:21-jdk-alpine
 
-percona/percona-xtrabackup:2.4
-percona/percona-xtrabackup:8.0.35-31-aarch64
-percona/percona-xtrabackup:8.0.35-31
-percona/percona-xtrabackup:8.4-aarch64
-percona/percona-xtrabackup:8.4
+#percona/percona-xtrabackup:2.4
+percona/percona-xtrabackup:8.0.35-aarch64
+percona/percona-xtrabackup:8.0.35
+#percona/percona-xtrabackup:8.4-aarch64
+#percona/percona-xtrabackup:8.4
 
