@@ -13,9 +13,8 @@
 #eclipse-temurin:21-jdk-alpine
 
 #percona/percona-xtrabackup:2.4
-percona/percona-xtrabackup:8.0
-percona/percona-xtrabackup:8.0.35-34-aarch64
+#percona/percona-xtrabackup:8.0
 percona/percona-xtrabackup:8.4
-percona/percona-xtrabackup:8.4.0-4-aarch64
+percona/percona-xtrabackup:8.0.35-34.1-arm64
 
 
