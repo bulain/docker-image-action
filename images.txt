@@ -21,7 +21,7 @@
 #heavenzhi1997/kingbase_se_single:v008r006c008b0020
 #apecloud/kingbase:v009r003c011b0003
 #oceanbase/oceanbase-ce:4.3.5-lts
-#polardb/polardb_pg_local_instance:15.15.5.0
+polardb/polardb_pg_local_instance:15.15.5.0
 #enmotech/opengauss:5.0.0
-enmotech/opengauss:6.0.0
+#enmotech/opengauss:6.0.0
 #opengauss/opengauss:7.0.0-RC2.B015
