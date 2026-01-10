@@ -22,9 +22,9 @@
 #apecloud/kingbase:v009r003c011b0003
 #oceanbase/oceanbase-ce:4.3.5-lts
 #polardb/polardb_pg_local_instance:15.15.5.0
-polardbx/polardb-x:v2.4.2_5.4.19
+#polardbx/polardb-x:v2.4.2_5.4.19
 #enmotech/opengauss:5.0.0
 #enmotech/opengauss:6.0.0
 #opengauss/opengauss:7.0.0-RC2.B015
-#liaosnet/gbase8s:v8.8_3633x31_csdk_x64
+liaosnet/gbase8s:v8.8_3633x31_csdk_x64
 
