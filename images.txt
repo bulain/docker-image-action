@@ -26,5 +26,4 @@
 #enmotech/opengauss:5.0.0
 #enmotech/opengauss:6.0.0
 #opengauss/opengauss:7.0.0-RC2.B015
-liaosnet/gbase8s:v8.8_3633x31_csdk_x64
-
+liaosnet/gbase8s:v8.8_3633x21_csdk_x64
