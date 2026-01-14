@@ -8,6 +8,15 @@
 
 #nginx:1.28-alpine
 
+mysql:8.0
+mysql:8.4
+
+redis:7.4
+redis:8.4
+
+rabbitmq:3.13-alpine
+rabbitmq:4.2-alpine
+
 #eclipse-temurin:8-jdk-alpine
 #eclipse-temurin:17-jdk-alpine
 #eclipse-temurin:21-jdk-alpine
@@ -26,4 +35,4 @@
 #enmotech/opengauss:5.0.0
 #enmotech/opengauss:6.0.0
 #opengauss/opengauss:7.0.0-RC2.B015
-liaosnet/gbase8s:v8.8_3633x21_csdk_x64
+#liaosnet/gbase8s:v8.8_3633x21_csdk_x64
