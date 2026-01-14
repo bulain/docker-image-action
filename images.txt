@@ -3,20 +3,20 @@
 
 #alpine:3.23
 
-#debian:13-slim
-#debian:13
+debian:13-slim
+debian:13
 
 #nginx:1.28-alpine
 
 #mysql:8.0
 #mysql:8.4
 
-redis:7.4-alpine
-redis:8.4-alpine
+#redis:7.4-alpine
+#redis:8.4-alpine
 
-valkey/valkey:7.2-alpine
-valkey/valkey:8.1-alpine
-valkey/valkey:9.0-alpine
+#valkey/valkey:7.2-alpine
+#valkey/valkey:8.1-alpine
+#valkey/valkey:9.0-alpine
 
 #rabbitmq:3.13-alpine
 #rabbitmq:4.2-alpine
@@ -28,7 +28,6 @@ valkey/valkey:9.0-alpine
 #percona/percona-xtrabackup:2.4
 #percona/percona-xtrabackup:8.0
 #percona/percona-xtrabackup:8.4
-#percona/percona-xtrabackup:8.0.35-34.1-arm64
 
 #onlyoffice/damengdb:8.1.2
 #heavenzhi1997/kingbase_se_single:v008r006c008b0020
