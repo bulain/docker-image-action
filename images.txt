@@ -8,14 +8,18 @@
 
 #nginx:1.28-alpine
 
-mysql:8.0
-mysql:8.4
+#mysql:8.0
+#mysql:8.4
 
-redis:7.4
-redis:8.4
+redis:7.4-alpine
+redis:8.4-alpine
 
-rabbitmq:3.13-alpine
-rabbitmq:4.2-alpine
+valkey/valkey:7.2-alpine
+valkey/valkey:8.1-alpine
+valkey/valkey:9.0-alpine
+
+#rabbitmq:3.13-alpine
+#rabbitmq:4.2-alpine
 
 #eclipse-temurin:8-jdk-alpine
 #eclipse-temurin:17-jdk-alpine
