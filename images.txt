@@ -3,10 +3,10 @@
 
 #alpine:3.23
 
-debian:13-slim
-debian:13
+#debian:13-slim
+#debian:13
 
-nginx:1.28-alpine
+#nginx:1.28-alpine
 
 #mysql:8.0
 #mysql:8.4
@@ -39,3 +39,10 @@ nginx:1.28-alpine
 #enmotech/opengauss:6.0.0
 #opengauss/opengauss:7.0.0-RC2.B015
 #liaosnet/gbase8s:v8.8_3633x21_csdk_x64
+
+prom/prometheus:v3.5.0
+prom/alertmanager:v0.30.1
+prom/node-exporter:v1.10.2
+prom/mysqld-exporter:v0.18.0
+oliver006/redis_exporter:v1.80.1-alpine
+prometheuscommunity/postgres-exporter:v0.18.1
