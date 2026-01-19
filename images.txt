@@ -11,9 +11,9 @@
 #mysql:8.0
 #mysql:8.4
 
-docker pull postgres:16
-docker pull postgres:17
-docker pull postgres:18
+postgres:16
+postgres:17
+postgres:18
 
 #redis:7.4-alpine
 #redis:8.4-alpine
