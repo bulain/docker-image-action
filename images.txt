@@ -35,6 +35,7 @@
 
 #onlyoffice/damengdb:8.1.2
 #heavenzhi1997/kingbase_se_single:v008r006c008b0020
+heavenzhi1997/kingbase_se_single:v009r001c001b0030
 #apecloud/kingbase:v009r003c011b0003
 #oceanbase/oceanbase-ce:4.3.5-lts
 #polardb/polardb_pg_local_instance:15.15.5.0
@@ -51,4 +52,4 @@
 #oliver006/redis_exporter:v1.80.1-alpine
 #prometheuscommunity/postgres-exporter:v0.18.1
 
-ghcr.io/valhalla/valhalla-scripted:3.6.2
+#ghcr.io/valhalla/valhalla-scripted:3.6.2
