@@ -9,6 +9,8 @@
 #nginx:1.28-alpine
 #nginx:1.30-alpine
 
+openresty/openresty:1.31.1.1-alpine
+
 #mysql:8.0
 #mysql:8.4
 
@@ -76,6 +78,6 @@
 #oliver006/redis_exporter:v1.86.0-alpine
 
 #grafana/loki:3.7
-grafana/alloy:v1.17.0
-grafana/promtail:3.6.11
-grafana/grafana:11.6.16
+#grafana/alloy:v1.17.0
+#grafana/promtail:3.6.11
+#grafana/grafana:11.6.16
