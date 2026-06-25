@@ -72,10 +72,10 @@
 
 #prom/prometheus:v3.5.4
 #prom/alertmanager:v0.33.0
-prom/node-exporter:v1.11.1
-oliver006/redis_exporter:v1.86.0-alpine
+#prom/node-exporter:v1.11.1
+#oliver006/redis_exporter:v1.86.0-alpine
 
-grafana/loki:3.7
-grafana/alloy:v1.17.04
+#grafana/loki:3.7
+grafana/alloy:v1.17.0
 grafana/promtail:3.6.11
 grafana/grafana:11.6.16
