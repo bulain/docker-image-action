@@ -30,6 +30,7 @@ alpine:3.23
 #rabbitmq:3.13-alpine
 #rabbitmq:4.2-alpine
 #rabbitmq:4.3-alpine
+apacherocketmq/rocketmq-dashboard:2.1.0
 
 #apache/rocketmq:5.5.0
 
