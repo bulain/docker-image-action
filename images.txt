@@ -7,10 +7,10 @@
 #debian:13
 
 #nginx:1.28-alpine
-nginx:1.30-alpine
+#nginx:1.30-alpine
 
 #mysql:8.0
-mysql:8.4
+#mysql:8.4
 
 #postgres:16
 #postgres:17
@@ -18,20 +18,20 @@ mysql:8.4
 
 #redis:7.4-alpine
 #redis:8.4-alpine
-redis:8.8-alpine
+#redis:8.8-alpine
 
 #valkey/valkey:7.2-alpine
 #valkey/valkey:8.1-alpine
 #valkey/valkey:9.0-alpine
-valkey/valkey:9.1-alpine
+#valkey/valkey:9.1-alpine
 
 #rabbitmq:3.13-alpine
 #rabbitmq:4.2-alpine
-rabbitmq:4.3-alpine
+#rabbitmq:4.3-alpine
 
-apache/rocketmq:5.5.0
+#apache/rocketmq:5.5.0
 
-nacos/nacos-server:v3.2.21
+nacos/nacos-server:v3.2.2
 
 xuxueli/xxl-job-admin:3.4.2
 
@@ -45,7 +45,7 @@ eclipse-temurin:21-jdk-alpine
 
 #onlyoffice/damengdb:8.1.2
 #heavenzhi1997/kingbase_se_single:v008r006c008b0020
-heavenzhi1997/kingbase_se_single:v009r001c001b0030
+#heavenzhi1997/kingbase_se_single:v009r001c001b0030
 #apecloud/kingbase:v009r003c011b0003
 #oceanbase/oceanbase-ce:4.3.5-lts
 #polardb/polardb_pg_local_instance:15.15.5.0
@@ -63,3 +63,19 @@ heavenzhi1997/kingbase_se_single:v009r001c001b0030
 #prometheuscommunity/postgres-exporter:v0.18.1
 
 #ghcr.io/valhalla/valhalla-scripted:3.6.2
+
+victoriametrics/victoria-metrics:v1.146.0
+victoriametrics/vmalert:v1.146.0
+victoriametrics/vmagent:v1.146.0
+victoriametrics/victoria-logs:v1.51.0
+victoriametrics/vlagent:v1.51.0
+
+prom/prometheus:v3.5.4
+prom/alertmanager:v0.33.0
+prom/node-exporter:v1.11.14
+oliver006/redis_exporter:v1.86.0-alpine
+
+grafana/loki:3.7
+grafana/alloy:v1.17.04
+grafana/promtail:3.6.114
+grafana/grafana:11.6.16
