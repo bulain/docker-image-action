@@ -1,7 +1,7 @@
 #busybox:1.37-musl
 #busybox:1.37-glibc
 
-#alpine:3.23
+alpine:3.23
 
 #debian:13-slim
 #debian:13
@@ -9,7 +9,7 @@
 #nginx:1.28-alpine
 #nginx:1.30-alpine
 
-openresty/openresty:1.31.1.1-alpine
+#openresty/openresty:1.31.1.1-alpine
 
 #mysql:8.0
 #mysql:8.4
