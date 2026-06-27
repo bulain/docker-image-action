@@ -30,7 +30,7 @@ alpine:3.23
 #rabbitmq:3.13-alpine
 #rabbitmq:4.2-alpine
 #rabbitmq:4.3-alpine
-apacherocketmq/rocketmq-dashboard:2.1.0
+#apacherocketmq/rocketmq-dashboard:2.1.0
 
 #apache/rocketmq:5.5.0
 
@@ -43,7 +43,7 @@ apacherocketmq/rocketmq-dashboard:2.1.0
 #eclipse-temurin:21-jdk-alpine
 
 #percona/percona-xtrabackup:2.4
-#percona/percona-xtrabackup:8.0
+#percona/percona-xtrabackup:8.0#
 #percona/percona-xtrabackup:8.4
 
 #onlyoffice/damengdb:8.1.2
@@ -77,6 +77,7 @@ apacherocketmq/rocketmq-dashboard:2.1.0
 #prom/alertmanager:v0.33.0
 #prom/node-exporter:v1.11.1
 #oliver006/redis_exporter:v1.86.0-alpine
+#bougou/alertmanager-webhook-adapter:v1.1.11
 
 #grafana/loki:3.7
 #grafana/alloy:v1.17.0
