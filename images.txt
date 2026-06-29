@@ -85,10 +85,10 @@
 #grafana/grafana:11.6.16
 
 rancher/klipper-helm:v0.11.1-build20260615
-#rancher/klipper-lb:v0.4.17
-#rancher/local-path-provisioner:v0.0.36
-#rancher/mirrored-coredns-coredns:1.14.4
-#rancher/mirrored-library-busybox:1.37.0
-#rancher/mirrored-library-traefik:3.7.4
-#rancher/mirrored-metrics-server:v0.8.1
-#rancher/mirrored-pause:3.6
+rancher/klipper-lb:v0.4.17
+rancher/local-path-provisioner:v0.0.36
+rancher/mirrored-coredns-coredns:1.14.4
+rancher/mirrored-library-busybox:1.37.0
+rancher/mirrored-library-traefik:3.7.4
+rancher/mirrored-metrics-server:v0.8.1
+rancher/mirrored-pause:3.6
