@@ -9,38 +9,38 @@
 #nginx:1.28-alpine
 #nginx:1.30-alpine
 
-openresty/openresty:1.31.1.1-alpine
+#openresty/openresty:1.31.1.1-alpine
 
 #mysql:8.0
 #mysql:8.4
 #mysql:9.7
 
 #postgres:16
-postgres:17
+#postgres:17
 #postgres:18
 
 #redis:7.4-alpine
-redis:8.4-alpine
-redis:8.8-alpine
+#redis:8.4-alpine
+#redis:8.8-alpine
 
 #valkey/valkey:7.2-alpine
-valkey/valkey:8.1-alpine
+#valkey/valkey:8.1-alpine
 #valkey/valkey:9.0-alpine
-valkey/valkey:9.1-alpine
+#valkey/valkey:9.1-alpine
 
 #rabbitmq:3.13-alpine
 #rabbitmq:4.2-alpine
-rabbitmq:4.3-alpine
+#rabbitmq:4.3-alpine
 
-apache/rocketmq:5.5.0
-apacherocketmq/rocketmq-dashboard:2.1.0
+#apache/rocketmq:5.5.0
+#apacherocketmq/rocketmq-dashboard:2.1.0
 
 nacos/nacos-server:v3.2.2
 
 xuxueli/xxl-job-admin:3.4.2
 
 #eclipse-temurin:8-jdk-alpine
-eclipse-temurin:17-jdk-alpine
+#eclipse-temurin:17-jdk-alpine
 eclipse-temurin:21-jdk-alpine
 
 #percona/percona-xtrabackup:2.4
