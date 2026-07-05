@@ -35,17 +35,17 @@
 #apache/rocketmq:5.5.0
 #apacherocketmq/rocketmq-dashboard:2.1.0
 
-nacos/nacos-server:v3.2.2
+#nacos/nacos-server:v3.2.2
 
-xuxueli/xxl-job-admin:3.4.2
+#xuxueli/xxl-job-admin:3.4.2
 
 #eclipse-temurin:8-jdk-alpine
 #eclipse-temurin:17-jdk-alpine
-eclipse-temurin:21-jdk-alpine
+#eclipse-temurin:21-jdk-alpine
 
 #percona/percona-xtrabackup:2.4
 #percona/percona-xtrabackup:8.0
-percona/percona-xtrabackup:8.4
+#percona/percona-xtrabackup:8.4
 
 #onlyoffice/damengdb:8.1.2
 #heavenzhi1997/kingbase_se_single:v008r006c008b0020
@@ -69,10 +69,10 @@ percona/percona-xtrabackup:8.4
 
 #ghcr.io/valhalla/valhalla-scripted:3.6.2
 
-victoriametrics/victoria-metrics:v1.146.0
-victoriametrics/vmalert:v1.146.0
+#victoriametrics/victoria-metrics:v1.146.0
+#victoriametrics/vmalert:v1.146.0
 #victoriametrics/vmagent:v1.146.0
-victoriametrics/victoria-logs:v1.51.0
+#victoriametrics/victoria-logs:v1.51.0
 #victoriametrics/vlagent:v1.51.0
 
 prom/prometheus:v3.5.4
