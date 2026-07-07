@@ -17,7 +17,7 @@ mysql:9.7
 
 #postgres:16
 #postgres:17
-postgres:18
+#postgres:18
 
 #redis:7.4-alpine
 #redis:8.4-alpine
@@ -79,7 +79,7 @@ postgres:18
 #prom/alertmanager:v0.33.0
 #prom/node-exporter:v1.11.1
 #oliver006/redis_exporter:v1.86.0-alpine
-#bougou/alertmanager-webhook-adapter:v1.1.11
+bougou/alertmanager-webhook-adapter:v1.1.11
 
 #grafana/loki:3.7
 #grafana/alloy:v1.17.0
