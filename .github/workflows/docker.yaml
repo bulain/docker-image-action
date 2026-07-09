@@ -8,9 +8,9 @@ on:
 
 env:
   ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
-  ACR_REGISTRY_NAME: "${{ secrets.ACR_REGISTRY_NAME }}"
-  ACR_REGISTRY_USER: "${{ secrets.ACR_REGISTRY_USER }}"
-  ACR_REGISTRY_SECRET: "${{ secrets.ACR_REGISTRY_SECRET }}"
+  ACR_REGISTRY_NS: "${{ secrets.ACR_REGISTRY_NS }}"
+  ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
+  ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
 
 jobs:
 
@@ -57,7 +57,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          docker login -u $ACR_REGISTRY_USER -p $ACR_REGISTRY_SECRET $ACR_REGISTRY_ENDPOINT
+          docker login -u $ACR_REGISTRY_AK -p $ACR_REGISTRY_SK $ACR_REGISTRY_ENDPOINT
           # 数据预处理,判断镜像是否重名
           declare -A duplicate_images
           declare -A temp_map
@@ -138,7 +138,7 @@ jobs:
           
               # 将@sha256:等字符删除
               image_name_tag="${image_name_tag%%@*}"
-              new_image="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NAME/$platform_prefix$name_space_prefix$image_name_tag"
+              new_image="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/$platform_prefix$name_space_prefix$image_name_tag"
               echo "docker tag $image $new_image"
               docker tag $image $new_image
               echo "docker push $new_image"

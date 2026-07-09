@@ -8,10 +8,13 @@ on:
 
 env:
   ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
-  ACR_REGISTRY_USER: "${{ secrets.ACR_REGISTRY_USER }}"
-  ACR_REGISTRY_SECRET: "${{ secrets.ACR_REGISTRY_SECRET }}"
+  ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
+  ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
   ACR_REGISTRY_IMAGES: "${{ secrets.ACR_REGISTRY_IMAGES }}"
-  ACR_REGISTRY_CHARTS: "${{ secrets.ACR_REGISTRY_CHARTS }}"
+  TCR_REGISTRY_ENDPOINT: "${{ secrets.TCR_REGISTRY_ENDPOINT }}"
+  TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
+  TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
+  TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
 
 jobs:
 
@@ -31,9 +34,10 @@ jobs:
       - name: Pull charts, mirror images and push to ACR
         run: |
           set -e
-          # 两处登录，凭据复用同一 ACR
-          docker login -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_SECRET" "$ACR_REGISTRY_ENDPOINT"
-          helm registry login "$ACR_REGISTRY_ENDPOINT" -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_SECRET"
+          # 镜像推送到 ACR
+          docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
+          # chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart）
+          #helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK"
 
           mkdir -p ./charts
 
@@ -82,8 +86,8 @@ jobs:
               echo "helm pull $ref --version $tag"
               helm pull "$ref" --version "$tag" -d ./charts
               tgz=$(ls ./charts/*.tgz)
-              echo "helm push $tgz oci://$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_CHARTS"
-              helm push "$tgz" "oci://$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_CHARTS"
+              echo "helm push $tgz oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+              #helm push "$tgz" "oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
               rm -f ./charts/*.tgz
 
           done < charts.txt
