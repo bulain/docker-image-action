@@ -40,7 +40,7 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 
 - `ACR_REGISTRY_ENDPOINT` —— ACR 地址。
 - `ACR_REGISTRY_USER` —— 登录用户。
-- `ACR_REGISTRY_PASSWORD` —— 登录密码；`docker login` 与 `helm registry login` 共用同一个。
+- `ACR_REGISTRY_SECRET` —— 登录密码；`docker login` 与 `helm registry login` 共用同一个。
 
 新增两个命名空间 secret：
 
@@ -91,8 +91,8 @@ oci://ghcr.io/some-org/some-chart:1.2.3
 
 ```bash
 # 两处登录，凭据复用同一 ACR
-docker login -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_PASSWORD" "$ACR_REGISTRY_ENDPOINT"
-helm registry login "$ACR_REGISTRY_ENDPOINT" -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_PASSWORD"
+docker login -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_SECRET" "$ACR_REGISTRY_ENDPOINT"
+helm registry login "$ACR_REGISTRY_ENDPOINT" -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_SECRET"
 
 mkdir -p ./charts
 
