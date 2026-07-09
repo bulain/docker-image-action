@@ -11,6 +11,10 @@ on:
         description: "推送 chart 时是否保留原命名空间作子路径（如 bitnamicharts）"
         type: boolean
         default: true
+      chart_plain_http:
+        description: "推送 chart 时使用明文 HTTP（--plain-http），关闭则用 HTTPS"
+        type: boolean
+        default: true
   push:
     branches: [ master ]
 
@@ -24,9 +28,10 @@ env:
   TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
-  # push 触发时 inputs 为空，fallback 到默认值：镜像不保留、chart 保留
+  # push 触发时 inputs 为空，fallback 到默认值：镜像不保留、chart 保留、chart 走 HTTP
   KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
   KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
+  CHART_PLAIN_HTTP: "${{ github.event.inputs.chart_plain_http || 'true' }}"
 
 jobs:
 
@@ -48,8 +53,14 @@ jobs:
           set -e
           # 镜像推送到 ACR
           docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
+          # chart 走 HTTP 还是 HTTPS
+          if [ "$CHART_PLAIN_HTTP" = "true" ]; then
+              HELM_HTTP_FLAG="--plain-http"
+          else
+              HELM_HTTP_FLAG=""
+          fi
           # chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart）
-          helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK"
+          helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
 
           mkdir -p ./charts
 
@@ -114,7 +125,7 @@ jobs:
                   chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
               fi
               echo "helm push $tgz $chart_target"
-              helm push "$tgz" "$chart_target"
+              helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
               rm -f ./charts/*.tgz
 
           done < charts.txt
