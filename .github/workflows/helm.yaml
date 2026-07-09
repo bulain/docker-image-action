@@ -71,9 +71,9 @@ jobs:
                   [[ -z "$img" ]] && continue
                   echo "docker pull $img"
                   docker pull "$img"
-                  # 去掉 @sha256 摘要，只取「镜像名:tag」
-                  name_tag=$(echo "${img%%@*}" | awk -F'/' '{print $NF}')
-                  new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$name_tag"
+                  # 去掉 @sha256 摘要，取镜像名（丢弃原 tag），用 chart 版本号作 tag
+                  image_name=$(echo "${img%%@*}" | awk -F'/' '{print $NF}' | awk -F':' '{print $1}')
+                  new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$tag"
                   echo "docker tag $img $new_img"
                   docker tag "$img" "$new_img"
                   echo "docker push $new_img"
