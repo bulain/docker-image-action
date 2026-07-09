@@ -94,5 +94,4 @@ mysql:9.7
 #rancher/mirrored-metrics-server:v0.8.1
 #rancher/mirrored-pause:3.6
 
-bitnamicharts/redis:27.0.13
 

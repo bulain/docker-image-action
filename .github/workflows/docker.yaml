@@ -10,7 +10,7 @@ env:
   ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
   ACR_REGISTRY_NAME: "${{ secrets.ACR_REGISTRY_NAME }}"
   ACR_REGISTRY_USER: "${{ secrets.ACR_REGISTRY_USER }}"
-  ACR_REGISTRY_PASSWORD: "${{ secrets.ACR_REGISTRY_PASSWORD }}"
+  ACR_REGISTRY_SECRET: "${{ secrets.ACR_REGISTRY_SECRET }}"
 
 jobs:
 
@@ -57,7 +57,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          docker login -u $ACR_REGISTRY_USER -p $ACR_REGISTRY_PASSWORD $ACR_REGISTRY_ENDPOINT
+          docker login -u $ACR_REGISTRY_USER -p $ACR_REGISTRY_SECRET $ACR_REGISTRY_ENDPOINT
           # 数据预处理,判断镜像是否重名
           declare -A duplicate_images
           declare -A temp_map
