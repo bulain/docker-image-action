@@ -1,0 +1,88 @@
+name: Helm
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+
+
+env:
+  ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
+  ACR_REGISTRY_USER: "${{ secrets.ACR_REGISTRY_USER }}"
+  ACR_REGISTRY_SECRET: "${{ secrets.ACR_REGISTRY_SECRET }}"
+  ACR_REGISTRY_IMAGES: "${{ secrets.ACR_REGISTRY_IMAGES }}"
+  ACR_REGISTRY_CHARTS: "${{ secrets.ACR_REGISTRY_CHARTS }}"
+
+jobs:
+
+  mirror:
+    name: Mirror Helm Charts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install helm-images plugin
+        run: helm plugin install https://github.com/nikhilsbhat/helm-images
+
+      - name: Pull charts, mirror images and push to ACR
+        run: |
+          set -e
+          # 两处登录，凭据复用同一 ACR
+          docker login -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_SECRET" "$ACR_REGISTRY_ENDPOINT"
+          helm registry login "$ACR_REGISTRY_ENDPOINT" -u "$ACR_REGISTRY_USER" -p "$ACR_REGISTRY_SECRET"
+
+          mkdir -p ./charts
+
+          while IFS= read -r line || [ -n "$line" ]; do
+              # 忽略空行与注释
+              [[ -z "$line" ]] && continue
+              if echo "$line" | grep -q '^\s*#'; then
+                  continue
+              fi
+
+              # 拆出 tag（版本）与 chart 引用
+              entry=$(echo "$line" | awk '{print $NF}')
+              tag="${entry##*:}"
+              ref="${entry%:*}"
+
+              # 短写补全默认 registry
+              case "$ref" in
+                  oci://*) ;;
+                  *) ref="oci://registry-1.docker.io/$ref" ;;
+              esac
+
+              echo "=============================================================================="
+              echo "处理 chart: $ref --version $tag"
+              echo "=============================================================================="
+
+              # ---- 1. 解析 chart 引用的镜像并逐个搬运 ----
+              echo "helm images get $ref --version $tag"
+              # 用进程替换避免 while 子 shell，让 set -e 在循环体内生效
+              while read -r img; do
+                  [[ -z "$img" ]] && continue
+                  echo "docker pull $img"
+                  docker pull "$img"
+                  # 去掉 @sha256 摘要，只取「镜像名:tag」
+                  name_tag=$(echo "${img%%@*}" | awk -F'/' '{print $NF}')
+                  new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$name_tag"
+                  echo "docker tag $img $new_img"
+                  docker tag "$img" "$new_img"
+                  echo "docker push $new_img"
+                  docker push "$new_img"
+                  # 逐个清理，控制磁盘
+                  docker rmi "$img" "$new_img" || true
+              done < <(helm images get "$ref" --version "$tag")
+
+              # ---- 2. push chart 本身 ----
+              echo "helm pull $ref --version $tag"
+              helm pull "$ref" --version "$tag" -d ./charts
+              tgz=$(ls ./charts/*.tgz)
+              echo "helm push $tgz oci://$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_CHARTS"
+              helm push "$tgz" "oci://$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_CHARTS"
+              rm -f ./charts/*.tgz
+
+          done < charts.txt
