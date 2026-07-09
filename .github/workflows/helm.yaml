@@ -128,4 +128,4 @@ jobs:
               helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
               rm -f ./charts/*.tgz
 
-          done < charts.txt
+          done < charts.properties

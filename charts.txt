@@ -1,5 +1,0 @@
-# Helm charts 清单，每行一个，支持 # 注释与空行
-# 短写 → 默认从 docker.io 拉取，例如 bitnamicharts/redis:27.0.13
-# 完整写法 → 任意 OCI registry，例如 oci://ghcr.io/some-org/some-chart:1.2.3
-
-bitnamicharts/redis:27.0.13
