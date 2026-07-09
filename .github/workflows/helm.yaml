@@ -26,7 +26,7 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Install helm-images plugin
-        run: helm plugin install https://github.com/nikhilsbhat/helm-images
+        run: helm plugin install https://github.com/nikhilsbhat/helm-images --verify=false
 
       - name: Pull charts, mirror images and push to ACR
         run: |
