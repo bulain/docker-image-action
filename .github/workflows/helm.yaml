@@ -2,6 +2,15 @@ name: Helm
 
 on:
   workflow_dispatch:
+    inputs:
+      keep_image_namespace:
+        description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
+        type: boolean
+        default: false
+      keep_chart_namespace:
+        description: "推送 chart 时是否保留原命名空间作子路径（如 bitnamicharts）"
+        type: boolean
+        default: true
   push:
     branches: [ master ]
 
@@ -15,6 +24,9 @@ env:
   TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
+  # push 触发时 inputs 为空，fallback 到默认值：镜像不保留、chart 保留
+  KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
+  KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
 
 jobs:
 
@@ -37,7 +49,7 @@ jobs:
           # 镜像推送到 ACR
           docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
           # chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart）
-          #helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK"
+          helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK"
 
           mkdir -p ./charts
 
@@ -71,8 +83,16 @@ jobs:
                   [[ -z "$img" ]] && continue
                   echo "docker pull $img"
                   docker pull "$img"
-                  # 去掉 @sha256 摘要，取镜像名（丢弃原 tag），用 chart 版本号作 tag
-                  image_name=$(echo "${img%%@*}" | awk -F'/' '{print $NF}' | awk -F':' '{print $1}')
+                  # 去掉 @sha256 摘要与原 tag，用 chart 版本号作 tag
+                  path="${img%%@*}"
+                  path="${path%:*}"
+                  if [ "$KEEP_IMAGE_NAMESPACE" = "true" ]; then
+                      # 保留命名空间段（去掉 registry 域名），如 bitnami/redis
+                      image_name=$(echo "$path" | awk -F'/' '{if (NF>=2) print $(NF-1)"/"$NF; else print $NF}')
+                  else
+                      # 只留镜像名，如 redis
+                      image_name=$(echo "$path" | awk -F'/' '{print $NF}')
+                  fi
                   new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$tag"
                   echo "docker tag $img $new_img"
                   docker tag "$img" "$new_img"
@@ -86,8 +106,15 @@ jobs:
               echo "helm pull $ref --version $tag"
               helm pull "$ref" --version "$tag" -d ./charts
               tgz=$(ls ./charts/*.tgz)
-              echo "helm push $tgz oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
-              #helm push "$tgz" "oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+              if [ "$KEEP_CHART_NAMESPACE" = "true" ]; then
+                  # 取源命名空间作子路径，如 bitnamicharts
+                  chart_ns=$(echo "$ref" | sed 's#^oci://##' | awk -F'/' '{if (NF>=2) print $(NF-1)}')
+                  chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$chart_ns"
+              else
+                  chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+              fi
+              echo "helm push $tgz $chart_target"
+              helm push "$tgz" "$chart_target"
               rm -f ./charts/*.tgz
 
           done < charts.txt
