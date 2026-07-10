@@ -3,6 +3,14 @@ name: Helm
 on:
   workflow_dispatch:
     inputs:
+      push_charts:
+        description: "是否推送 chart 本身到 registry"
+        type: boolean
+        default: true
+      push_images:
+        description: "是否推送 chart 引用的镜像到 registry"
+        type: boolean
+        default: false
       keep_image_namespace:
         description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
         type: boolean
@@ -32,7 +40,9 @@ env:
   TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
-  # push 触发时 inputs 为空，fallback 到默认值：镜像不保留、chart 保留、chart 走 HTTP
+  # push 触发时 inputs 为空，fallback 到默认值：推 chart 不推镜像、镜像不保留命名空间、chart 保留、chart 走 HTTP
+  PUSH_CHARTS: "${{ github.event.inputs.push_charts || 'true' }}"
+  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'false' }}"
   KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
   KEEP_IMAGE_ORIGINAL_TAG: "${{ github.event.inputs.keep_image_original_tag || 'true' }}"
   KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
@@ -56,16 +66,20 @@ jobs:
       - name: Pull charts, mirror images and push to ACR
         run: |
           set -e
-          # 镜像推送到 ACR
-          docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
+          # 镜像推送到 ACR（仅在推送镜像时登录）
+          if [ "$PUSH_IMAGES" = "true" ]; then
+              docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
+          fi
           # chart 走 HTTP 还是 HTTPS
           if [ "$CHART_PLAIN_HTTP" = "true" ]; then
               HELM_HTTP_FLAG="--plain-http"
           else
               HELM_HTTP_FLAG=""
           fi
-          # chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart）
-          helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
+          # chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart；仅在推送 chart 时登录）
+          if [ "$PUSH_CHARTS" = "true" ]; then
+              helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
+          fi
 
           mkdir -p ./charts
 
@@ -91,60 +105,70 @@ jobs:
               echo "处理 chart: $ref --version $tag"
               echo "=============================================================================="
 
+              # 两开关皆关时空操作
+              if [ "$PUSH_IMAGES" != "true" ] && [ "$PUSH_CHARTS" != "true" ]; then
+                  echo "跳过（push_charts 与 push_images 均关闭）"
+                  continue
+              fi
+
               # ---- 1. 解析 chart 引用的镜像并逐个搬运 ----
-              echo "helm images get $ref --version $tag"
-              # 用进程替换避免 while 子 shell，让 set -e 在循环体内生效
-              # awk '!seen[$0]++' 按原始字符串去重，保留原顺序
-              while read -r img; do
-                  [[ -z "$img" ]] && continue
-                  echo "docker pull $img"
-                  docker pull "$img"
-                  # 去掉 @sha256 摘要与原 tag，得到镜像路径
-                  path="${img%%@*}"
-                  path="${path%:*}"
-                  if [ "$KEEP_IMAGE_NAMESPACE" = "true" ]; then
-                      # 保留命名空间段（去掉 registry 域名），如 bitnami/redis
-                      image_name=$(echo "$path" | awk -F'/' '{if (NF>=2) print $(NF-1)"/"$NF; else print $NF}')
-                  else
-                      # 只留镜像名，如 redis
-                      image_name=$(echo "$path" | awk -F'/' '{print $NF}')
-                  fi
-                  # 决定新镜像的 tag
-                  if [ "$KEEP_IMAGE_ORIGINAL_TAG" = "true" ]; then
-                      # 保留镜像原始 tag；无 @sha256 前的 tag 时回退到 chart 版本号
-                      no_digest="${img%%@*}"
-                      orig_tag="${no_digest##*:}"
-                      if [ "$orig_tag" = "$no_digest" ]; then
-                          image_tag="$tag"
-                      else
-                          image_tag="$orig_tag"
-                      fi
-                  else
-                      # 用 chart 版本号作 tag
-                      image_tag="$tag"
-                  fi
-                  new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$image_tag"
-                  echo "docker tag $img $new_img"
-                  docker tag "$img" "$new_img"
-                  echo "docker push $new_img"
-                  docker push "$new_img"
-                  # 逐个清理，控制磁盘
-                  docker rmi "$img" "$new_img" || true
-              done < <(helm images get "$ref" --version "$tag" | awk '!seen[$0]++')
+              if [ "$PUSH_IMAGES" = "true" ]; then
+                echo "helm images get $ref --version $tag"
+                # 用进程替换避免 while 子 shell，让 set -e 在循环体内生效
+                # awk '!seen[$0]++' 按原始字符串去重，保留原顺序
+                while read -r img; do
+                    [[ -z "$img" ]] && continue
+                    echo "docker pull $img"
+                    docker pull "$img"
+                    # 去掉 @sha256 摘要与原 tag，得到镜像路径
+                    path="${img%%@*}"
+                    path="${path%:*}"
+                    if [ "$KEEP_IMAGE_NAMESPACE" = "true" ]; then
+                        # 保留命名空间段（去掉 registry 域名），如 bitnami/redis
+                        image_name=$(echo "$path" | awk -F'/' '{if (NF>=2) print $(NF-1)"/"$NF; else print $NF}')
+                    else
+                        # 只留镜像名，如 redis
+                        image_name=$(echo "$path" | awk -F'/' '{print $NF}')
+                    fi
+                    # 决定新镜像的 tag
+                    if [ "$KEEP_IMAGE_ORIGINAL_TAG" = "true" ]; then
+                        # 保留镜像原始 tag；无 @sha256 前的 tag 时回退到 chart 版本号
+                        no_digest="${img%%@*}"
+                        orig_tag="${no_digest##*:}"
+                        if [ "$orig_tag" = "$no_digest" ]; then
+                            image_tag="$tag"
+                        else
+                            image_tag="$orig_tag"
+                        fi
+                    else
+                        # 用 chart 版本号作 tag
+                        image_tag="$tag"
+                    fi
+                    new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$image_tag"
+                    echo "docker tag $img $new_img"
+                    docker tag "$img" "$new_img"
+                    echo "docker push $new_img"
+                    docker push "$new_img"
+                    # 逐个清理，控制磁盘
+                    docker rmi "$img" "$new_img" || true
+                done < <(helm images get "$ref" --version "$tag" | awk '!seen[$0]++')
+              fi
 
               # ---- 2. push chart 本身 ----
-              echo "helm pull $ref --version $tag"
-              helm pull "$ref" --version "$tag" -d ./charts
-              tgz=$(ls ./charts/*.tgz)
-              if [ "$KEEP_CHART_NAMESPACE" = "true" ]; then
-                  # 取源命名空间作子路径，如 bitnamicharts
-                  chart_ns=$(echo "$ref" | sed 's#^oci://##' | awk -F'/' '{if (NF>=2) print $(NF-1)}')
-                  chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$chart_ns"
-              else
-                  chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+              if [ "$PUSH_CHARTS" = "true" ]; then
+                echo "helm pull $ref --version $tag"
+                helm pull "$ref" --version "$tag" -d ./charts
+                tgz=$(ls ./charts/*.tgz)
+                if [ "$KEEP_CHART_NAMESPACE" = "true" ]; then
+                    # 取源命名空间作子路径，如 bitnamicharts
+                    chart_ns=$(echo "$ref" | sed 's#^oci://##' | awk -F'/' '{if (NF>=2) print $(NF-1)}')
+                    chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$chart_ns"
+                else
+                    chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+                fi
+                echo "helm push $tgz $chart_target"
+                helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
+                rm -f ./charts/*.tgz
               fi
-              echo "helm push $tgz $chart_target"
-              helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
-              rm -f ./charts/*.tgz
 
           done < charts.properties
