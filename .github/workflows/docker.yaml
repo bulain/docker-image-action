@@ -6,7 +6,7 @@ on:
       push_images:
         description: "是否推送镜像到 registry"
         type: boolean
-        default: false
+        default: true
       keep_image_namespace:
         description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
         type: boolean
