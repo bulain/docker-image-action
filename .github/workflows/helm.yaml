@@ -7,6 +7,10 @@ on:
         description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
         type: boolean
         default: false
+      keep_image_original_tag:
+        description: "推送镜像时是否保留镜像原始 tag（关闭则用 chart 版本号作 tag）"
+        type: boolean
+        default: true
       keep_chart_namespace:
         description: "推送 chart 时是否保留原命名空间作子路径（如 bitnamicharts）"
         type: boolean
@@ -30,6 +34,7 @@ env:
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
   # push 触发时 inputs 为空，fallback 到默认值：镜像不保留、chart 保留、chart 走 HTTP
   KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
+  KEEP_IMAGE_ORIGINAL_TAG: "${{ github.event.inputs.keep_image_original_tag || 'true' }}"
   KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
   CHART_PLAIN_HTTP: "${{ github.event.inputs.chart_plain_http || 'true' }}"
 
@@ -94,7 +99,7 @@ jobs:
                   [[ -z "$img" ]] && continue
                   echo "docker pull $img"
                   docker pull "$img"
-                  # 去掉 @sha256 摘要与原 tag，用 chart 版本号作 tag
+                  # 去掉 @sha256 摘要与原 tag，得到镜像路径
                   path="${img%%@*}"
                   path="${path%:*}"
                   if [ "$KEEP_IMAGE_NAMESPACE" = "true" ]; then
@@ -104,7 +109,21 @@ jobs:
                       # 只留镜像名，如 redis
                       image_name=$(echo "$path" | awk -F'/' '{print $NF}')
                   fi
-                  new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$tag"
+                  # 决定新镜像的 tag
+                  if [ "$KEEP_IMAGE_ORIGINAL_TAG" = "true" ]; then
+                      # 保留镜像原始 tag；无 @sha256 前的 tag 时回退到 chart 版本号
+                      no_digest="${img%%@*}"
+                      orig_tag="${no_digest##*:}"
+                      if [ "$orig_tag" = "$no_digest" ]; then
+                          image_tag="$tag"
+                      else
+                          image_tag="$orig_tag"
+                      fi
+                  else
+                      # 用 chart 版本号作 tag
+                      image_tag="$tag"
+                  fi
+                  new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$image_tag"
                   echo "docker tag $img $new_img"
                   docker tag "$img" "$new_img"
                   echo "docker push $new_img"
