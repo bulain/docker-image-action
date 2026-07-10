@@ -3,6 +3,10 @@ name: Docker
 on:
   workflow_dispatch:
     inputs:
+      push_images:
+        description: "是否推送镜像到 registry"
+        type: boolean
+        default: false
       keep_image_namespace:
         description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
         type: boolean
@@ -16,7 +20,8 @@ env:
   ACR_REGISTRY_NS: "${{ secrets.ACR_REGISTRY_NS }}"
   ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
   ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
-  # push 触发时 inputs 为空，fallback 到默认值：不保留命名空间
+  # push 触发时 inputs 为空，fallback 到默认值：不推送镜像、不保留命名空间
+  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'false' }}"
   KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
 
 jobs:
@@ -64,6 +69,11 @@ jobs:
 
       - name: Build and push image
         run: |
+          # push_images 关闭时跳过登录与整个搬运循环
+          if [ "$PUSH_IMAGES" != "true" ]; then
+              echo "跳过（push_images 关闭）"
+              exit 0
+          fi
           docker login -u $ACR_REGISTRY_AK -p $ACR_REGISTRY_SK $ACR_REGISTRY_ENDPOINT
 
           while IFS= read -r line || [ -n "$line" ]; do
