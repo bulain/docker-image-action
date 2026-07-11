@@ -26,14 +26,16 @@
 
 ```yaml
 # Git 源 Helm Chart 清单：仓库源码 chart，需 git clone + helm package 后搬运
-# repo: git 仓库地址  path: chart 子路径  ref: git 分支/tag/commit
+# repo: git 仓库地址  path: chart 子路径  ref: git 分支/tag/commit  namespace: chart 目标前缀
 charts:
   - repo: https://github.com/percona/percona-helm-charts.git
     path: charts/ps-operator
     ref: ps-operator-1.2.0
+    namespace: percona
 ```
 
 - `ref` 用于 `git checkout`（支持分支/tag/commit）。
+- `namespace` 为 chart 推到 TCR 时的目标前缀（如 `percona` → `.../percona/ps-operator`），受 `KEEP_CHART_NAMESPACE` 控制。
 - chart 版本号由 `helm package` 自动从 `Chart.yaml` 读取，**不在清单里重复写版本**。
 - 将来加 pg-operator、psmdb-operator 等只需追加数组项。
 - workflow 里用 `yq`（GitHub runner 预装）解析。
@@ -81,9 +83,10 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
 
 ### chart 子路径规则
 
-git 源没有 OCI 路径可继承。`KEEP_CHART_NAMESPACE=true` 时用 chart 名
-（取 `path` 的 basename，如 `ps-operator`）作子路径 → `oci://$TCR/$TCR_NS/ps-operator`；
-关闭则直推 `oci://$TCR/$TCR_NS`。
+`KEEP_CHART_NAMESPACE=true` 时用清单里的 `namespace` 字段作子路径，
+chart 推到 `oci://$TCR/$TCR_NS/<namespace>/<chart名>`（如 `oci://$TCR/$TCR_NS/percona/ps-operator`，
+chart 名由 `helm push` 从包名自动决定）；
+关闭则直推 `oci://$TCR/$TCR_NS`（丢前缀）。
 
 ## 与现有文件的关系
 
