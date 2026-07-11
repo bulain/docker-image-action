@@ -18,7 +18,7 @@
 **为什么 Chart 推 TCR**：Helm Chart 是 OCI artifact，阿里云 ACR 个人版不支持存储 Chart，因此 Chart 本身推到 TCR；Chart 引用的镜像仍推到 ACR。
 
 - **Docker 流程**：逐行读 `images.properties` → `docker pull` → 重打 tag 到 ACR → `docker push` → `docker rmi` 释放磁盘。
-- **Helm 流程**：逐行读 `charts.properties` → 用 `helm images get` 解析 Chart 引用的镜像并逐个搬到 ACR → `helm pull` 拉取 Chart 本身并 `helm push` 到 TCR。
+- **Helm 流程**：逐行读 `charts.properties` → 用 `helm template` 渲染后提取 `image:`/`initImage:` 字段解析 Chart 引用的镜像并逐个搬到 ACR（能识别 CR 里的镜像）→ `helm pull` 拉取 Chart 本身并 `helm push` 到 TCR。
 
 ## 快速上手
 
@@ -158,7 +158,7 @@ oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 ## 常见问题 / 注意事项
 
 - **磁盘空间**：GitHub Actions runner 磁盘有限。Docker 流程用 `easimon/maximize-build-space` 扩容，且两条流程都在每次 push 后 `docker rmi` 逐个清理镜像。搬运超大镜像仍可能失败。
-- **某些 Chart `helm images get` 失败**：部分 Chart（如 Loki）模板渲染需要必填 values（如 `loki.storage.bucketNames.chunks`），未提供时解析镜像会报错。此类 Chart 需在脚本中补 `--set` 传值，或单独处理。
+- **某些 Chart `helm template` 渲染失败**：部分 Chart（如 Loki）模板渲染需要必填 values（如 `loki.storage.bucketNames.chunks`），未提供时解析镜像会报错（脚本已用 `2>/dev/null` 吞掉错误，仅表现为提取不到镜像、不中断）。此类 Chart 需在脚本中补 `--set` 传值，或单独处理。
 - **ACR 个人版不支持 Helm Chart**：这是 Chart 本身改推 TCR 的原因，镜像仍在 ACR。
 - **`push: master` 会自动触发**：只要清单或 workflow 变更推到 master，就会按默认开关跑一遍。不想自动跑时，注意提交内容或临时调整触发条件。
 - **凭据安全**：所有 registry 凭据走 GitHub Secrets，脚本中不硬编码。

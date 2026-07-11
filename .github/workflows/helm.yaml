@@ -60,9 +60,6 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Install helm-images plugin
-        run: helm plugin install https://github.com/nikhilsbhat/helm-images --verify=false
-
       - name: Pull charts, mirror images and push to ACR
         run: |
           set -e
@@ -111,7 +108,9 @@ jobs:
 
               # ---- 1. 解析 chart 引用的镜像并逐个搬运 ----
               if [ "$PUSH_IMAGES" = "true" ]; then
-                echo "helm images get $ref --version $tag"
+                echo "helm template $ref --version $tag 提取 image 字段"
+                # helm images get 只识别标准工作负载，认不出 CR（如 RedisSentinel、PerconaServerMySQL）里的 image。
+                # 改用 helm template 渲染后提取所有 image: 字段值，对标准工作负载与 CR 都有效。
                 # 用进程替换避免 while 子 shell，让 set -e 在循环体内生效
                 # awk '!seen[$0]++' 按原始字符串去重，保留原顺序
                 while read -r img; do
@@ -149,7 +148,12 @@ jobs:
                     docker push "$new_img"
                     # 逐个清理，控制磁盘
                     docker rmi "$img" "$new_img" || true
-                done < <(helm images get "$ref" --version "$tag" | awk '!seen[$0]++')
+                done < <(helm template "$ref" --version "$tag" 2>/dev/null \
+                    | grep -oE '^[[:space:]]*(image|initImage):[[:space:]]*.+' \
+                    | sed -E 's/^[[:space:]]*[a-zA-Z]+:[[:space:]]*//' \
+                    | tr -d '\042\047' \
+                    | grep -vE '^[[:space:]]*$' \
+                    | awk '!seen[$0]++')
               fi
 
               # ---- 2. push chart 本身 ----

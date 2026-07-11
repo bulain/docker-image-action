@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `helm.yaml`（根目录）— 待搬运的 Helm Chart 清单，YAML 顶层 `charts` 数组，格式 `oci://.../name:version`（`:` 后为 chart 版本）。短写补全为 `oci://registry-1.docker.io/`。注释掉某行即禁用。
 - `git-charts.yaml` — git 源码 chart 清单（只存源码、未发布为 OCI 的 chart），`charts` 数组每条含 `repo/path/ref/namespace`。`namespace` 为目标前缀，helm push 自动在其后追加 chart 名。
 - `.github/workflows/docker.yaml` — 用 `yq` 读根目录 `docker.yaml` 清单，`pull → tag → push → rmi`（逐个清理磁盘）。
-- `.github/workflows/helm.yaml` — 用 `yq` 读根目录 `helm.yaml` 清单：用 `helm images get` 解析 chart 引用的镜像并搬运（推到 ACR），再 `helm pull` chart 本身推到 TCR。
+- `.github/workflows/helm.yaml` — 用 `yq` 读根目录 `helm.yaml` 清单：用 `helm template` 渲染后提取 `image:`/`initImage:` 字段解析 chart 引用的镜像并搬运（推到 ACR，能识别 CR 里的镜像），再 `helm pull` chart 本身推到 TCR。
 - `.github/workflows/git-charts.yaml` — 用 `yq` 读 `git-charts.yaml`：`git clone` + `helm package` 推 chart 到 TCR，`helm template` 提取镜像推到 ACR。
 - `docs/superpowers/specs/` — 两份设计文档，改动搬运逻辑前应先读。
 
