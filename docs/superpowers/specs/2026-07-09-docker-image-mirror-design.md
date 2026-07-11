@@ -41,7 +41,10 @@ chart 是 OCI artifact，阿里云 ACR 个人版不支持，改用其他 registr
 
 ```yaml
 KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
+ACR_PLAIN_HTTP:       "${{ github.event.inputs.acr_plain_http || 'true' }}"
 ```
+
+`acr_plain_http`（默认 `true`）：推送镜像到 ACR 走明文 HTTP。因 `docker push` 无 `--plain-http` flag，为 `true` 时在扩容后重启 docker 前把 `$ACR_REGISTRY_ENDPOINT` 写进 `/etc/docker/daemon.json` 的 `insecure-registries`，用于 ACR endpoint 指向内网 HTTP registry 的场景。
 
 ## Secrets / 环境变量
 

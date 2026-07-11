@@ -25,7 +25,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 两个 workflow 都由 `workflow_dispatch`（手动，带布尔 inputs）或 `push: master` 触发。**push 触发时 inputs 为空**，靠 env 里的 `|| 'true'` / `|| 'false'` fallback 决定行为——改默认行为就改这些 fallback。
 - 镜像目标路径 / tag 由开关控制：`KEEP_IMAGE_NAMESPACE`（是否保留 `bitnami/` 段）、`KEEP_IMAGE_ORIGINAL_TAG`（关则用 chart 版本号当 tag）。
-- Chart 目标路径由 `KEEP_CHART_NAMESPACE` 控制；`CHART_PLAIN_HTTP` 决定 `helm push` 走 `--plain-http` 还是 HTTPS（ACR 个人版不支持 OCI chart，故 chart 推 TCR）。
+- Chart 目标路径由 `KEEP_CHART_NAMESPACE` 控制；`TCR_PLAIN_HTTP` 决定 `helm push` 走 `--plain-http` 还是 HTTPS（ACR 个人版不支持 OCI chart，故 chart 推 TCR）。
+- `ACR_PLAIN_HTTP`（三个 workflow 都有，默认 `true`）决定 `docker push` 到 ACR 走明文 HTTP 还是 HTTPS。因 `docker push` 无 `--plain-http` flag，为 `true` 时在 login 前把 `$ACR_REGISTRY_ENDPOINT` 写进 `/etc/docker/daemon.json` 的 `insecure-registries` 并重启 docker（docker.yaml 合并进扩容后的那次 restart，helm/git-charts 在 login 前单独重启）。用于 ACR endpoint 指向内网 HTTP registry 的场景。
 - 所有 registry 凭据来自 GitHub Secrets（`ACR_*` / `TCR_*`），脚本中不硬编码。
 - 磁盘空间紧张：docker.yaml 用 `easimon/maximize-build-space` 扩容，两个脚本都在每次 push 后 `docker rmi` 释放空间。
 

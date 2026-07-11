@@ -101,6 +101,7 @@ charts:
 | --- | --- | --- |
 | `push_images` | `true` | 是否推送镜像。关闭则跳过登录与整个搬运循环。 |
 | `keep_image_namespace` | `false` | 是否保留镜像原命名空间。`true` → `bitnami/redis`；`false` → `redis`。 |
+| `acr_plain_http` | `true` | 推送镜像到 ACR 走明文 HTTP（把 endpoint 配进 docker `insecure-registries`）；`false` 用 HTTPS。 |
 
 ### Helm workflow 开关
 
@@ -111,7 +112,8 @@ charts:
 | `keep_image_namespace` | `false` | 镜像是否保留原命名空间段。 |
 | `keep_image_original_tag` | `true` | `true` 用镜像原始 tag；`false` 用 Chart 版本号当 tag。 |
 | `keep_chart_namespace` | `true` | Chart 是否保留域名之后的完整子路径（如 `grafana-community/helm-charts`）。 |
-| `chart_plain_http` | `true` | `helm push` 用明文 HTTP（`--plain-http`）；`false` 用 HTTPS。 |
+| `tcr_plain_http` | `true` | `helm push` 用明文 HTTP（`--plain-http`）；`false` 用 HTTPS。 |
+| `acr_plain_http` | `true` | 推送镜像到 ACR 走明文 HTTP（把 endpoint 配进 docker `insecure-registries`）；`false` 用 HTTPS。 |
 
 > **注意**：`push: master` 触发时全部按 fallback 值运行。要改自动触发的默认行为，需修改 workflow env 里的 `|| '...'` 回退值。
 
