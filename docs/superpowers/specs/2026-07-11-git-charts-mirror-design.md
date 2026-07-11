@@ -8,10 +8,13 @@
 但部分 chart（如 Percona 的 operator chart）只以**源码**形式存在于 git 仓库中，
 未发布为 OCI，无法用现有流程处理，必须先 `git clone` + `helm package` 才能得到 `.tgz` 产物。
 
-首个用例：`percona/percona-helm-charts` 仓库的 `charts/ps-operator`
-（tag `ps-operator-1.2.0`，chart version 1.2.0）。该 chart 的 templates 只部署 operator 自身，
-`helm images get` 解析出的镜像仅 operator 主镜像 `percona/percona-server-mysql-operator:1.2.0` 一个；
-数据库、haproxy、backup、pmm 等镜像由运行时 CR（自定义资源）按需指定，不在 chart templates 内，故不随本 chart 搬运。
+首个用例：`percona/percona-helm-charts` 仓库的两个 chart：
+
+- `charts/ps-operator`（tag `ps-operator-1.2.0`，chart version 1.2.0）：templates 只部署 operator 自身，
+  `helm images get` 解析出的镜像仅 operator 主镜像 `percona/percona-server-mysql-operator:1.2.0` 一个。
+- `charts/ps-db`（tag `ps-db-1.2.0`，chart version 1.2.0）：部署数据库实例，
+  引用 percona-server、haproxy、mysql-router、orchestrator、pmm-client、xtrabackup、toolkit 等多个组件镜像，
+  以 `helm images get` 实际解析结果为准。
 
 ## 目标与产物
 
@@ -24,7 +27,7 @@
 
 ## 清单文件 `git-charts.yaml`（仓库根目录）
 
-结构化 YAML，顶层 `charts` 数组，每条三字段：
+结构化 YAML，顶层 `charts` 数组，每条四字段：
 
 ```yaml
 # Git 源 Helm Chart 清单：仓库源码 chart，需 git clone + helm package 后搬运
@@ -33,6 +36,10 @@ charts:
   - repo: https://github.com/percona/percona-helm-charts.git
     path: charts/ps-operator
     ref: ps-operator-1.2.0
+    namespace: percona/helm-charts
+  - repo: https://github.com/percona/percona-helm-charts.git
+    path: charts/ps-db
+    ref: ps-db-1.2.0
     namespace: percona/helm-charts
 ```
 
