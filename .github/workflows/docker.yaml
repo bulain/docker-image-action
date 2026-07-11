@@ -76,10 +76,10 @@ jobs:
           fi
           docker login -u $ACR_REGISTRY_AK -p $ACR_REGISTRY_SK $ACR_REGISTRY_ENDPOINT
 
-          # 逐条读取 images.yaml 的 images 数组（注释掉的条目 yq 读不到，天然=禁用）
-          count=$(yq '.images | length' images.yaml)
+          # 逐条读取 docker.yaml 清单的 images 数组（注释掉的条目 yq 读不到，天然=禁用）
+          count=$(yq '.images | length' docker.yaml)
           for i in $(seq 0 $((count - 1))); do
-              line=$(yq ".images[$i]" images.yaml)
+              line=$(yq ".images[$i]" docker.yaml)
 
               echo "docker pull $line"
               docker pull $line

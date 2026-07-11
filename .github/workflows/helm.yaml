@@ -83,10 +83,10 @@ jobs:
 
           mkdir -p ./charts
 
-          # 逐条读取 charts.yaml 的 charts 数组（注释掉的条目 yq 读不到，天然=禁用）
-          count=$(yq '.charts | length' charts.yaml)
+          # 逐条读取 helm.yaml 清单的 charts 数组（注释掉的条目 yq 读不到，天然=禁用）
+          count=$(yq '.charts | length' helm.yaml)
           for i in $(seq 0 $((count - 1))); do
-              line=$(yq ".charts[$i]" charts.yaml)
+              line=$(yq ".charts[$i]" helm.yaml)
 
               # 拆出 tag（版本）与 chart 引用
               entry=$(echo "$line" | awk '{print $NF}')

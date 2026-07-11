@@ -12,11 +12,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 架构
 
-- `images.yaml` — 待搬运的 Docker 镜像清单，YAML 顶层 `images` 数组，每条一行字符串。注释掉某行（保持 `#`）即禁用。短写（`mysql:9.7`）默认取自 docker.io；可用 `--platform linux/amd64 xxx` 指定架构。
-- `charts.yaml` — 待搬运的 Helm Chart 清单，YAML 顶层 `charts` 数组，格式 `oci://.../name:version`（`:` 后为 chart 版本）。短写补全为 `oci://registry-1.docker.io/`。注释掉某行即禁用。
+- 清单文件命名规则：清单名 = 读取它的 workflow 名（根目录清单与 `.github/workflows/` 下同名 workflow 一一对应，靠目录区分）。
+- `docker.yaml`（根目录）— 待搬运的 Docker 镜像清单，YAML 顶层 `images` 数组，每条一行字符串。注释掉某行（保持 `#`）即禁用。短写（`mysql:9.7`）默认取自 docker.io；可用 `--platform linux/amd64 xxx` 指定架构。
+- `helm.yaml`（根目录）— 待搬运的 Helm Chart 清单，YAML 顶层 `charts` 数组，格式 `oci://.../name:version`（`:` 后为 chart 版本）。短写补全为 `oci://registry-1.docker.io/`。注释掉某行即禁用。
 - `git-charts.yaml` — git 源码 chart 清单（只存源码、未发布为 OCI 的 chart），`charts` 数组每条含 `repo/path/ref/namespace`。
-- `.github/workflows/docker.yaml` — 用 `yq` 读 `images.yaml`，`pull → tag → push → rmi`（逐个清理磁盘）。
-- `.github/workflows/helm.yaml` — 用 `yq` 读 `charts.yaml`：用 `helm images get` 解析 chart 引用的镜像并搬运（推到 ACR），再 `helm pull` chart 本身推到 TCR。
+- `.github/workflows/docker.yaml` — 用 `yq` 读根目录 `docker.yaml` 清单，`pull → tag → push → rmi`（逐个清理磁盘）。
+- `.github/workflows/helm.yaml` — 用 `yq` 读根目录 `helm.yaml` 清单：用 `helm images get` 解析 chart 引用的镜像并搬运（推到 ACR），再 `helm pull` chart 本身推到 TCR。
 - `.github/workflows/git-charts.yaml` — 用 `yq` 读 `git-charts.yaml`：`git clone` + `helm package` 推 chart 到 TCR，`helm template` 提取镜像推到 ACR。
 - `docs/superpowers/specs/` — 两份设计文档，改动搬运逻辑前应先读。
 
