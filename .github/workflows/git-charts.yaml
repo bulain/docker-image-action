@@ -170,7 +170,16 @@ jobs:
                 helm package "$chart_dir" -d ./workspace
                 tgz=$(ls -t ./workspace/*.tgz | head -1)
                 if [ "$KEEP_CHART_NAMESPACE" = "true" ] && [ -n "$namespace" ] && [ "$namespace" != "null" ]; then
-                    chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$namespace"
+                    # namespace 是含 chart 名的完整目标路径；helm push 会自动追加 chart 名，故剥掉最后一段
+                    case "$namespace" in
+                        */*) chart_prefix="${namespace%/*}" ;;   # 多段：去掉最后的 chart 名
+                        *)   chart_prefix="" ;;                   # 单段（只有 chart 名）：推到 NS 根
+                    esac
+                    if [ -n "$chart_prefix" ]; then
+                        chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$chart_prefix"
+                    else
+                        chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+                    fi
                 else
                     chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
                 fi
