@@ -5,10 +5,10 @@
 
 ## 背景
 
-现有 `.github/workflows/docker.yaml` 通过 `images.properties` 清单把 Docker 镜像镜像到
+现有 `.github/workflows/docker.yaml` 通过 `docker.yaml` 清单把 Docker 镜像镜像到
 阿里云 ACR（登录 → pull → tag → push → 清理），并处理了 `--platform` 与命名空间。
 
-此前尝试把 Helm chart `bitnamicharts/redis:27.0.13` 加进 `images.txt`，但 chart 是 OCI
+此前尝试把 Helm chart `bitnamicharts/redis:27.0.13` 加进镜像清单，但 chart 是 OCI
 artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此需要一套独立的 Helm chart
 镜像流程。
 
@@ -24,7 +24,7 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 
 - 用一个独立的 GitHub Actions workflow（`helm.yaml`），镜像 Helm chart（OCI 格式）。
 - 同一流程中解析出每个 chart 引用的容器镜像，并镜像到 ACR。
-- chart 清单风格与 `images.properties` 一致：每行一个，支持 `#` 注释与空行。
+- chart 清单风格与 `docker.yaml` 一致：YAML 顶层数组，每条一行，注释掉即禁用。
 - 与镜像镜像流程解耦，保持各自脚本清晰。
 
 ## 非目标（YAGNI）
@@ -36,7 +36,8 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 ## 涉及文件
 
 - `.github/workflows/helm.yaml` —— 工作流。
-- `charts.properties` —— chart 清单。
+- `helm.yaml` —— chart 清单（YAML 顶层 `charts` 数组）。
+- `config.yaml` —— 搬运行为开关。
 
 ## 触发方式与开关
 
@@ -66,43 +67,42 @@ chart 推送到 TCR（支持 OCI chart 的独立 registry）：
 - `TCR_REGISTRY_SK` —— 登录密码。
 - `TCR_REGISTRY_NS` —— chart 推送到的命名空间。
 
-## 清单格式（`charts.properties`）
+## 清单格式（`helm.yaml`）
 
+YAML 顶层 `charts` 数组，每条一行字符串：
+
+```yaml
+charts:
+  # 短写 → 默认从 docker.io 拉取
+  - bitnamicharts/redis:27.0.13
+  # 完整写法 → 任意 OCI registry
+  - oci://ghcr.io/some-org/some-chart:1.2.3
 ```
-# 短写 → 默认从 docker.io 拉取
-bitnamicharts/redis:27.0.13
 
-# 完整写法 → 任意 OCI registry
-oci://ghcr.io/some-org/some-chart:1.2.3
-```
+每条解析规则：
 
-每行解析规则：
-
-1. 去掉空行与注释行（以 `#` 开头，可含前导空白）。
-2. 若行以 `oci://` 开头 → 原样作为来源引用；否则补前缀 `oci://registry-1.docker.io/`。
+1. 注释掉的条目 `yq` 读不到，天然=禁用。
+2. 若以 `oci://` 开头 → 原样作为来源引用；否则补前缀 `oci://registry-1.docker.io/`。
 3. 拆出结尾的 `:tag`：`tag` 作为 `helm pull --version` 的值；其余部分作为 chart 引用（`ref`）。
 
 ## 工具准备
 
 - `azure/setup-helm@v4` —— 安装 helm。
-- `helm-images` 插件 —— `helm plugin install https://github.com/nikhilsbhat/helm-images --verify=false`，
-  提供 `helm images get <chart-ref>` 列出 chart 引用的镜像。（新版 helm 默认要求验证插件源，
-  helm-images 不支持，故加 `--verify=false`。）
-- runner 自带 docker，用于镜像的 pull/tag/push；无需额外安装 skopeo。
+- 镜像解析改用 `helm template` 渲染后 `grep` 提取 `image:`/`initImage:` 字段值（对标准工作负载与 CR 都有效），不依赖 `helm-images` 插件。
+- runner 自带 docker 与 `yq`，用于镜像的 pull/tag/push 与清单读取；无需额外安装 skopeo。
 
 ## 目标路径与命名规则
 
 ### 镜像 → ACR
 
 ```
-$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/<name_path>:<chart 版本号>
+$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/<name_path>:<image_tag>
 ```
 
-- **tag 用 chart 版本号**（`$tag`），而非镜像自身的原 tag。同一 chart 引用的所有镜像
-  都带相同的 chart 版本 tag。
+- **image_tag**：保留镜像原始 tag（如 `redis:8.2.1` → `8.2.1`）；镜像无 tag（仅 `@sha256` 摘要）时回退用 chart 版本号 `$tag`。
 - **name_path** 受 `keep_image_namespace` 控制：
-  - `false`（默认）：只留镜像名，如 `docker.io/bitnami/redis:8.2.1` → `redis`。
-  - `true`：保留命名空间段（去 registry 域名），如 → `bitnami/redis`。
+  - `true`（默认）：保留命名空间段（去 registry 域名），如 `docker.io/bitnami/redis:8.2.1` → `bitnami/redis`。
+  - `false`：只留镜像名，如 → `redis`。
 - 镜像列表经 `awk '!seen[$0]++'` 按原始字符串去重（保留原顺序），避免同一 chart 内
   重复镜像被多次搬运。
 
@@ -124,23 +124,23 @@ oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS[/<源命名空间>]
 
 ```bash
 set -e
-# 镜像推送到 ACR
-docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
+# 从 config.yaml 读取开关（带 fallback）
+PUSH_CHARTS=$(yq '.push_charts // "true"' config.yaml)
+PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
+KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "true"' config.yaml)
+KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace // "true"' config.yaml)
+# 镜像推送到 ACR（仅在推送镜像时登录；ACR_PLAIN_HTTP=true 时先配 insecure-registries 并重启）
+[ "$PUSH_IMAGES" = "true" ] && docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
 # chart 走 HTTP 还是 HTTPS
-if [ "$TCR_PLAIN_HTTP" = "true" ]; then
-    HELM_HTTP_FLAG="--plain-http"
-else
-    HELM_HTTP_FLAG=""
-fi
-# chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart）
-helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
+if [ "$TCR_PLAIN_HTTP" = "true" ]; then HELM_HTTP_FLAG="--plain-http"; else HELM_HTTP_FLAG=""; fi
+# chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart；仅在推送 chart 时登录）
+[ "$PUSH_CHARTS" = "true" ] && helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
 
 mkdir -p ./charts
 
-while IFS= read -r line || [ -n "$line" ]; do
-    [[ -z "$line" ]] && continue
-    echo "$line" | grep -q '^\s*#' && continue
-
+count=$(yq '.charts | length' helm.yaml)
+for i in $(seq 0 $((count - 1))); do
+    line=$(yq ".charts[$i]" helm.yaml)
     entry=$(echo "$line" | awk '{print $NF}')
     tag="${entry##*:}"
     ref="${entry%:*}"
@@ -149,8 +149,9 @@ while IFS= read -r line || [ -n "$line" ]; do
         *) ref="oci://registry-1.docker.io/$ref" ;;
     esac
 
-    # ---- 1. 解析 chart 引用的镜像并逐个搬运 ----
-    while read -r img; do
+    # ---- 1. 解析 chart 引用的镜像并逐个搬运（helm template 提取 image/initImage 字段）----
+    if [ "$PUSH_IMAGES" = "true" ]; then
+      while read -r img; do
         [[ -z "$img" ]] && continue
         docker pull "$img"
         path="${img%%@*}"; path="${path%:*}"
@@ -159,24 +160,33 @@ while IFS= read -r line || [ -n "$line" ]; do
         else
             image_name=$(echo "$path" | awk -F'/' '{print $NF}')
         fi
-        new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/$image_name:$tag"
+        # 保留原始 tag，无 tag 时回退 chart 版本号
+        no_digest="${img%%@*}"; orig_tag="${no_digest##*:}"
+        if [ "$orig_tag" = "$no_digest" ]; then image_tag="$tag"; else image_tag="$orig_tag"; fi
+        new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/$image_name:$image_tag"
         docker tag "$img" "$new_img"
         docker push "$new_img"
         docker rmi "$img" "$new_img" || true
-    done < <(helm images get "$ref" --version "$tag" | awk '!seen[$0]++')
+      done < <(helm template "$ref" --version "$tag" 2>/dev/null \
+          | grep -oE '^[[:space:]]*(image|initImage):[[:space:]]*.+' \
+          | sed -E 's/^[[:space:]]*[a-zA-Z]+:[[:space:]]*//' \
+          | tr -d '\042\047' | grep -vE '^[[:space:]]*$' | awk '!seen[$0]++')
+    fi
 
     # ---- 2. push chart 本身 ----
-    helm pull "$ref" --version "$tag" -d ./charts
-    tgz=$(ls ./charts/*.tgz)
-    if [ "$KEEP_CHART_NAMESPACE" = "true" ]; then
-        chart_ns=$(echo "$ref" | sed 's#^oci://##' | awk -F'/' '{if (NF>=2) print $(NF-1)}')
-        chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$chart_ns"
-    else
-        chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+    if [ "$PUSH_CHARTS" = "true" ]; then
+      helm pull "$ref" --version "$tag" -d ./charts
+      tgz=$(ls ./charts/*.tgz)
+      if [ "$KEEP_CHART_NAMESPACE" = "true" ]; then
+          chart_ns=$(echo "$ref" | sed 's#^oci://##' | awk -F'/' '{for(i=2;i<NF;i++){printf "%s%s", (i>2?"/":""), $i}}')
+          chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$chart_ns"
+      else
+          chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+      fi
+      helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
+      rm -f ./charts/*.tgz
     fi
-    helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
-    rm -f ./charts/*.tgz
-done < charts.properties
+done
 ```
 
 ## 错误处理
@@ -188,9 +198,9 @@ done < charts.properties
 
 ## 已知权衡
 
-1. **镜像 tag 统一为 chart 版本号**：便于按 chart 版本追溯，但丢失了镜像自身的原 tag。
+1. **镜像 tag 保留原始值**：便于与上游对齐；镜像无 tag（仅摘要）时回退 chart 版本号。
 2. **同名镜像覆盖**：`keep_image_namespace=false` 时只取镜像名，来源不同但同名的镜像会在
-   ACR 撞名互相覆盖。bitnami 单一生态场景通常无此问题；需区分时开启 `keep_image_namespace`。
+   ACR 撞名互相覆盖。默认 `true` 保留命名空间段，避免此问题；确不需区分时才关。
 3. **私有源镜像**：`docker login` 只登录了 ACR。若 chart 引用的镜像来自需要认证的私有源，
    `docker pull` 会失败；公共镜像不受影响。
 4. **ACR 个人版不支持 chart**：故 chart 单独推 TCR；若升级 ACR 企业版可考虑合并回 ACR。
@@ -198,7 +208,7 @@ done < charts.properties
 ## 测试与验证
 
 - 提交前对脚本片段做 `bash -n` 语法检查，并验证命名空间/tag 提取逻辑。
-- 首次运行用 `workflow_dispatch` 手动触发，`charts.properties` 只放一个已知 chart
+- 首次运行用 `workflow_dispatch` 手动触发，`helm.yaml` 只放一个已知 chart
   （`bitnamicharts/redis:27.0.13`）验证端到端。
 - 检查镜像出现在 ACR 的 `$ACR_REGISTRY_NS/` 下、chart 出现在 TCR 的
   `$TCR_REGISTRY_NS/` 下，并可分别 `docker pull` / `helm pull` 回来。

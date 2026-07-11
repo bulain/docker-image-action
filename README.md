@@ -8,17 +8,19 @@
 
 ## 工作原理
 
-项目有**两条相互独立**的搬运流程，各自对应一个 workflow 和一份清单：
+项目有**三条相互独立**的搬运流程，各自对应一个 workflow 和一份清单：
 
 | 流程 | 清单文件 | Workflow | 目标 registry |
 | --- | --- | --- | --- |
 | Docker 镜像 | `docker.yaml` | `.github/workflows/docker.yaml` | 阿里云 ACR |
-| Helm Chart | `helm.yaml` | `.github/workflows/helm.yaml` | 镜像 → ACR，Chart 本身 → 腾讯云 TCR |
+| Helm Chart（OCI） | `helm.yaml` | `.github/workflows/helm.yaml` | 镜像 → ACR，Chart 本身 → 腾讯云 TCR |
+| Git 源码 Chart | `git-charts.yaml` | `.github/workflows/git-charts.yaml` | 镜像 → ACR，Chart 本身 → 腾讯云 TCR |
 
 **为什么 Chart 推 TCR**：Helm Chart 是 OCI artifact，阿里云 ACR 个人版不支持存储 Chart，因此 Chart 本身推到 TCR；Chart 引用的镜像仍推到 ACR。
 
 - **Docker 流程**：逐条读 `docker.yaml` → `docker pull` → 重打 tag 到 ACR → `docker push` → `docker rmi` 释放磁盘。
 - **Helm 流程**：逐条读 `helm.yaml` → 用 `helm template` 渲染后提取 `image:`/`initImage:` 字段解析 Chart 引用的镜像并逐个搬到 ACR（能识别 CR 里的镜像）→ `helm pull` 拉取 Chart 本身并 `helm push` 到 TCR。
+- **Git 源码 Chart 流程**：逐条读 `git-charts.yaml` → `git clone` 指定 repo/ref → 定位 chart 目录 → `helm template` 提取镜像搬到 ACR → `helm package` 打包 Chart 并 `helm push` 到 TCR。用于只有源码、未发布为 OCI 的 Chart。
 
 ## 快速上手
 
@@ -34,7 +36,7 @@
 
 3. **触发搬运**：
    - **自动**：提交并推送到 `master` 分支，对应 workflow 自动运行。
-   - **手动**：在 GitHub `Actions` 页选择 workflow → `Run workflow`，可临时调整开关。
+   - **手动**：在 GitHub `Actions` 页选择 workflow → `Run workflow`，行为由 `config.yaml` 决定（无参数勾选）。
 
 运行结束后，镜像 / Chart 就出现在你的私有 registry 里。最终路径规则见 [走查示例](#走查示例)。
 
@@ -42,7 +44,7 @@
 
 在仓库 `Settings → Secrets and variables → Actions` 添加以下 Secrets。
 
-**阿里云 ACR（两条流程都用到）**
+**阿里云 ACR（三条流程都用到）**
 
 | Secret | 用途 | 示例 |
 | --- | --- | --- |
@@ -52,7 +54,7 @@
 | `ACR_REGISTRY_NS` | 镜像统一命名空间（Docker 流程 + Helm/git Chart 引用镜像） | `my-namespace` |
 | `ACR_PLAIN_HTTP` | 可选。推送镜像到 ACR 是否走明文 HTTP（endpoint 为内网 HTTP registry 时用），未配置默认 `true` | `false` |
 
-**腾讯云 TCR（仅 Helm 流程推 Chart 用到）**
+**腾讯云 TCR（Helm 与 Git 源码 Chart 流程推 Chart 用到）**
 
 | Secret | 用途 | 示例 |
 | --- | --- | --- |
@@ -64,7 +66,7 @@
 
 ## 清单格式
 
-两份清单都是 YAML，条目放在顶层数组下（`docker.yaml` 用 `images:`，`helm.yaml` 用 `charts:`），**一行一个条目**，注释掉某行（保持 `#`）即禁用，空行忽略。
+清单都是 YAML。`docker.yaml`（顶层 `images:`）与 `helm.yaml`（顶层 `charts:`）**一行一个条目**，注释掉某行（保持 `#`）即禁用，空行忽略；`git-charts.yaml`（顶层 `charts:`）每条是含 `repo/path/ref/namespace` 的对象。
 
 ### `docker.yaml`（Docker 镜像）
 
@@ -90,13 +92,30 @@ charts:
   - oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 ```
 
+### `git-charts.yaml`（Git 源码 Chart）
+
+只存源码、未发布为 OCI 的 Chart。顶层 `charts:` 数组，每条含四个字段：
+
+- `repo`：git 仓库地址。
+- `path`：Chart 在仓库中的相对路径。
+- `ref`：git 分支 / tag（`git clone --branch` 用）。
+- `namespace`：推到 TCR 时的目标前缀，`helm push` 自动在其后追加 Chart 名。
+
+```yaml
+charts:
+  - repo: https://github.com/minio/operator.git
+    path: helm/operator
+    ref: v7.1.1
+    namespace: minio/helm-charts
+```
+
 ### `config.yaml`（搬运行为开关）
 
 根目录 `config.yaml` 集中放搬运行为开关，三个 workflow 运行时用 `yq` 读取。详见下方「触发方式与开关参考」。
 
 ## 触发方式与开关参考
 
-**触发方式**（两条流程相同）：
+**触发方式**（三条流程相同）：
 
 - **`push: master`**：自动运行。
 - **`workflow_dispatch`**：手动运行（无参数勾选，行为由 `config.yaml` 决定）。
@@ -128,8 +147,8 @@ charts:
 
 | `keep_image_namespace` | 推送到的最终路径 |
 | --- | --- |
-| `false`（默认） | `registry.cn-hangzhou.aliyuncs.com/my-ns/redis:7.4` |
-| `true` | `registry.cn-hangzhou.aliyuncs.com/my-ns/bitnami/redis:7.4` |
+| `false` | `registry.cn-hangzhou.aliyuncs.com/my-ns/redis:7.4` |
+| `true`（默认） | `registry.cn-hangzhou.aliyuncs.com/my-ns/bitnami/redis:7.4` |
 
 若行首带 `--platform linux/amd64`，镜像名再加前缀，如 `.../my-ns/linux_amd64_redis:7.4`。
 
@@ -154,7 +173,7 @@ charts:
 
 ## 常见问题 / 注意事项
 
-- **磁盘空间**：GitHub Actions runner 磁盘有限。Docker 流程用 `easimon/maximize-build-space` 扩容，且两条流程都在每次 push 后 `docker rmi` 逐个清理镜像。搬运超大镜像仍可能失败。
+- **磁盘空间**：GitHub Actions runner 磁盘有限。Docker 流程用 `easimon/maximize-build-space` 扩容，且三条流程都在每次 push 后 `docker rmi` 逐个清理镜像。搬运超大镜像仍可能失败。
 - **某些 Chart `helm template` 渲染失败**：部分 Chart（如 Loki）模板渲染需要必填 values（如 `loki.storage.bucketNames.chunks`），未提供时解析镜像会报错（脚本已用 `2>/dev/null` 吞掉错误，仅表现为提取不到镜像、不中断）。此类 Chart 需在脚本中补 `--set` 传值，或单独处理。
 - **ACR 个人版不支持 Helm Chart**：这是 Chart 本身改推 TCR 的原因，镜像仍在 ACR。
 - **`push: master` 会自动触发**：只要清单或 workflow 变更推到 master，就会按默认开关跑一遍。不想自动跑时，注意提交内容或临时调整触发条件。

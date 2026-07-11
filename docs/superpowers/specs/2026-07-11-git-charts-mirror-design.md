@@ -57,7 +57,7 @@ charts:
 
 `workflow_dispatch`（手动，无参数）+ `push: master`。
 搬运开关运行时从根目录 `config.yaml` 用 `yq '.key // "默认"' config.yaml` 读取（带 fallback），
-与现有两个 workflow 约定一致。
+与其余 workflow（docker.yaml / helm.yaml）约定一致。
 
 ### 开关（来自 config.yaml，复用 helm.yaml 语义）
 
@@ -77,7 +77,7 @@ charts:
 
 ### Secrets
 
-- `ACR_*`（`ACR_REGISTRY_ENDPOINT` / `_AK` / `_SK` / `_IMAGES`）— 镜像目标。
+- `ACR_*`（`ACR_REGISTRY_ENDPOINT` / `_AK` / `_SK` / `_NS`）— 镜像目标。
 - `TCR_*`（`TCR_REGISTRY_ENDPOINT` / `_AK` / `_SK` / `_NS`）— chart 目标。
 
 脚本中不硬编码凭据。
@@ -109,7 +109,7 @@ chart 名由 `helm push` 从包名自动决定）；
 
 ## 与现有文件的关系
 
-- 不修改 `docker.yaml` / `helm.yaml` / `images.properties` / `charts.properties`。
+- 不修改 `docker.yaml` / `helm.yaml` 清单。
 - 新增 `git-charts.yaml`（清单）与 `.github/workflows/git-charts.yaml`（workflow）。
 
 ## 验证
