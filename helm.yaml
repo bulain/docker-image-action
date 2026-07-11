@@ -24,7 +24,7 @@ charts:
 
 #   https://github.com/OT-CONTAINER-KIT/redis-operator
 #  - oci://ghcr.io/ot-container-kit/charts/redis-operator:0.25.0
-  - oci://ghcr.io/ot-container-kit/charts/redis-sentinel:0.16.13
-#  - oci://ghcr.io/ot-container-kit/charts/redis-cluster:0.17.4
-#  - oci://ghcr.io/ot-container-kit/charts/redis-replication:0.17.0
+#  - oci://ghcr.io/ot-container-kit/charts/redis-sentinel:0.16.13
+  - oci://ghcr.io/ot-container-kit/charts/redis-cluster:0.17.4
+  - oci://ghcr.io/ot-container-kit/charts/redis-replication:0.17.0
 #  - oci://ghcr.io/ot-container-kit/charts/redis:0.16.9
