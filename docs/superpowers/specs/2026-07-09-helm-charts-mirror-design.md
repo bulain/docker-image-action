@@ -41,7 +41,7 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 ## 触发方式与开关
 
 - 触发：`workflow_dispatch`（手动，无参数）+ `push: [master]`（自动）。
-- 搬运开关（`push_charts` / `push_images` / `keep_image_namespace` / `keep_image_original_tag` / `keep_chart_namespace`）已抽到根目录 `config.yaml`，运行时用 `yq '.key // "默认"' config.yaml` 读取（带 fallback），不再走 workflow input。
+- 搬运开关（`push_charts` / `push_images` / `keep_image_namespace` / `keep_chart_namespace`）已抽到根目录 `config.yaml`，运行时用 `yq '.key // "默认"' config.yaml` 读取（带 fallback），不再走 workflow input。镜像 tag 固定保留原始 tag（无 tag 时回退 chart 版本号），无开关。
 
 | 开关（config.yaml key） | 默认 | 说明 |
 | --- | --- | --- |

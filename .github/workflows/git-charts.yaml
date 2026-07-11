@@ -17,7 +17,6 @@ env:
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
   TCR_PLAIN_HTTP: "${{ secrets.TCR_PLAIN_HTTP || 'true' }}"
-  # 搬运行为开关统一从根目录 config.yaml 读取（见脚本 step 开头）
 
 jobs:
 
@@ -38,7 +37,6 @@ jobs:
           PUSH_CHARTS=$(yq '.push_charts // "true"' config.yaml)
           PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
           KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "false"' config.yaml)
-          KEEP_IMAGE_ORIGINAL_TAG=$(yq '.keep_image_original_tag // "true"' config.yaml)
           KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace // "true"' config.yaml)
           # 镜像推送到 ACR（仅在推送镜像时登录）
           if [ "$PUSH_IMAGES" = "true" ]; then
@@ -116,19 +114,13 @@ jobs:
                         # 只留镜像名，如 percona-server
                         image_name=$(echo "$p" | awk -F'/' '{print $NF}')
                     fi
-                    # 决定新镜像的 tag
-                    if [ "$KEEP_IMAGE_ORIGINAL_TAG" = "true" ]; then
-                        # 保留镜像原始 tag；无 @sha256 前的 tag 时回退到 chart 版本号
-                        no_digest="${img%%@*}"
-                        orig_tag="${no_digest##*:}"
-                        if [ "$orig_tag" = "$no_digest" ]; then
-                            image_tag="$tag"
-                        else
-                            image_tag="$orig_tag"
-                        fi
-                    else
-                        # 用 chart 版本号作 tag
+                    # 保留镜像原始 tag；无 @sha256 前的 tag 时回退到 chart 版本号
+                    no_digest="${img%%@*}"
+                    orig_tag="${no_digest##*:}"
+                    if [ "$orig_tag" = "$no_digest" ]; then
                         image_tag="$tag"
+                    else
+                        image_tag="$orig_tag"
                     fi
                     new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/$image_name:$image_tag"
                     echo "docker tag $img $new_img"

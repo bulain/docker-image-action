@@ -66,7 +66,6 @@ charts:
 | `push_charts` | true | 是否推 chart 到 TCR |
 | `push_images` | true | 是否推镜像到 ACR |
 | `keep_image_namespace` | false | 推镜像是否保留命名空间段（如 `percona/xxx`） |
-| `keep_image_original_tag` | true | 推镜像是否保留原始 tag（关则用 chart 版本号） |
 | `keep_chart_namespace` | true | 推 chart 是否加子路径 |
 
 明文 HTTP 开关来自 Secrets（非 config.yaml）：
@@ -93,7 +92,7 @@ charts:
    - **镜像**（PUSH_IMAGES）：`helm template .` 渲染后 `grep` 提取 `image:`/`initImage:`
      字段值，去引号、去空、`awk '!seen[$0]++'` 去重后逐个
      `pull → tag → push` 到 `$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/...`，逐个 `rmi`；
-     沿用 helm.yaml 的 `KEEP_IMAGE_NAMESPACE` / `KEEP_IMAGE_ORIGINAL_TAG`（含 tag 回退到 chart 版本号）逻辑。
+     沿用 helm.yaml 的 `KEEP_IMAGE_NAMESPACE` 逻辑；镜像 tag 固定保留原始 tag（无 tag 时回退 chart 版本号）。
    - **chart**（PUSH_CHARTS）：`helm package .` 得 `.tgz` →
      `helm push <tgz> oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS[/子路径] $HELM_HTTP_FLAG`。
 

@@ -108,7 +108,6 @@ charts:
 | `push_images` | `true` | 全部 | 是否推送镜像。关闭则跳过登录与搬运循环。 |
 | `push_charts` | `true` | Helm / git | 是否推送 Chart 本身到 TCR。 |
 | `keep_image_namespace` | `false` | 全部 | 镜像是否保留原命名空间段。`true` → `bitnami/redis`；`false` → `redis`。 |
-| `keep_image_original_tag` | `true` | Helm / git | `true` 用镜像原始 tag；`false` 用 Chart 版本号当 tag。 |
 | `keep_chart_namespace` | `true` | Helm / git | Chart 是否保留命名空间子路径（如 `grafana-community/helm-charts`）。 |
 
 > Docker workflow 只读 `push_images` / `keep_image_namespace`，其余 chart 相关开关忽略。
@@ -144,10 +143,7 @@ charts:
 
 假设 `TCR_REGISTRY_ENDPOINT=my.tencentcloudcr.com`、`TCR_REGISTRY_NS=charts`，触发后分两部分：
 
-**① Chart 引用的镜像** → 推到 ACR（`ACR_REGISTRY_NS` 命名空间），tag 规则：
-
-- `keep_image_original_tag=true`（默认）：用镜像原始 tag，如 `prometheus:v3.13.0`。
-- `keep_image_original_tag=false`：用 Chart 版本号，如 `prometheus:29.14.0`。
+**① Chart 引用的镜像** → 推到 ACR（`ACR_REGISTRY_NS` 命名空间），tag 规则：保留镜像原始 tag，如 `prometheus:v3.13.0`；镜像无 tag 时回退用 Chart 版本号，如 `prometheus:29.14.0`。
 
 **② Chart 本身** → 推到 TCR：
 

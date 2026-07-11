@@ -12,7 +12,6 @@ env:
   ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
   ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
   ACR_PLAIN_HTTP: "${{ secrets.ACR_PLAIN_HTTP || 'true' }}"
-  # 搬运行为开关统一从根目录 config.yaml 读取（见脚本 step 开头）
 
 jobs:
 
