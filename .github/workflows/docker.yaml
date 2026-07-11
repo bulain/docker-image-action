@@ -63,9 +63,12 @@ jobs:
 
       - name: Build and push image
         run: |
-          # 从 config.yaml 读取搬运开关（缺失则回退默认值）
-          PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
-          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "true"' config.yaml)
+          # 从 config.yaml 读取搬运开关（缺失/注释掉回退默认 true，显式 false 才生效）
+          # 注意：不能用 yq 的 `// "true"`——`//` 对 false 也会取默认值，会把 false 吞成 true
+          PUSH_IMAGES=$(yq '.push_images' config.yaml)
+          [ "$PUSH_IMAGES" = "false" ] || PUSH_IMAGES="true"
+          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace' config.yaml)
+          [ "$KEEP_IMAGE_NAMESPACE" = "false" ] || KEEP_IMAGE_NAMESPACE="true"
           # push_images 关闭时跳过登录与整个搬运循环
           if [ "$PUSH_IMAGES" != "true" ]; then
               echo "跳过（push_images 关闭）"

@@ -33,11 +33,16 @@ jobs:
       - name: Clone git-source charts, mirror images to ACR and push charts to TCR
         run: |
           set -e
-          # 从 config.yaml 读取搬运开关（缺失则回退默认值）
-          PUSH_CHARTS=$(yq '.push_charts // "true"' config.yaml)
-          PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
-          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "true"' config.yaml)
-          KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace // "true"' config.yaml)
+          # 从 config.yaml 读取搬运开关（缺失/注释掉回退默认 true，显式 false 才生效）
+          # 注意：不能用 yq 的 `// "true"`——`//` 对 false 也会取默认值，会把 false 吞成 true
+          PUSH_CHARTS=$(yq '.push_charts' config.yaml)
+          [ "$PUSH_CHARTS" = "false" ] || PUSH_CHARTS="true"
+          PUSH_IMAGES=$(yq '.push_images' config.yaml)
+          [ "$PUSH_IMAGES" = "false" ] || PUSH_IMAGES="true"
+          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace' config.yaml)
+          [ "$KEEP_IMAGE_NAMESPACE" = "false" ] || KEEP_IMAGE_NAMESPACE="true"
+          KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace' config.yaml)
+          [ "$KEEP_CHART_NAMESPACE" = "false" ] || KEEP_CHART_NAMESPACE="true"
           # 镜像推送到 ACR（仅在推送镜像时登录）
           if [ "$PUSH_IMAGES" = "true" ]; then
               # ACR_PLAIN_HTTP=true 时把 ACR endpoint 配进 insecure-registries，让 docker push 走明文 HTTP
