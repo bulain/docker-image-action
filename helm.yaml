@@ -2,10 +2,10 @@
 # 格式 oci://.../name:version（: 后为 chart 版本）。
 # 短写补全为 oci://registry-1.docker.io/，例如 bitnamicharts/redis:27.0.13
 charts:
-  # https://github.com/apache/rocketmq
+#   https://github.com/apache/rocketmq
 #  - apache/rocketmq:0.0.1
 
-  # https://github.com/VictoriaMetrics/helm-charts
+#   https://github.com/VictoriaMetrics/helm-charts
 #  - oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-cluster:0.46.0
 #  - oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-single:0.42.0
 #  - oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-operator-crds:0.13.1
@@ -14,21 +14,17 @@ charts:
 #  - oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single:0.13.8
 #  - oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-cluster:0.2.7
 
-  # https://github.com/prometheus-community/helm-charts
+#   https://github.com/prometheus-community/helm-charts
 #  - oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack:87.12.3
 #  - oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 
-  # https://github.com/grafana-community/helm-charts
+#   https://github.com/grafana-community/helm-charts
 #  - oci://ghcr.io/grafana-community/helm-charts/grafana:12.7.2
 #  - oci://ghcr.io/grafana-community/helm-charts/loki:18.4.2
 
-  # https://github.com/OT-CONTAINER-KIT/redis-operator
+#   https://github.com/OT-CONTAINER-KIT/redis-operator
 #  - oci://ghcr.io/ot-container-kit/charts/redis-operator:0.25.0
 #  - oci://ghcr.io/ot-container-kit/charts/redis-sentinel:0.16.13
 #  - oci://ghcr.io/ot-container-kit/charts/redis-cluster:0.17.4
 #  - oci://ghcr.io/ot-container-kit/charts/redis-replication:0.17.0
 #  - oci://ghcr.io/ot-container-kit/charts/redis:0.16.9
-
-  # https://github.com/minio/operator
-  - oci://quay.io/minio/charts/operator:7.1.1
-  - oci://quay.io/minio/charts/minio:7.1.1
