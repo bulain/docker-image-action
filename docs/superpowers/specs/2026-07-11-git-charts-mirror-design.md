@@ -86,7 +86,7 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
    - `helm dependency build`（若 chart 声明了子依赖）。
    - **镜像**（PUSH_IMAGES）：`helm template .` 渲染后 `grep` 提取 `image:`/`initImage:`
      字段值，去引号、去空、`awk '!seen[$0]++'` 去重后逐个
-     `pull → tag → push` 到 `$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/...`，逐个 `rmi`；
+     `pull → tag → push` 到 `$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/...`，逐个 `rmi`；
      沿用 helm.yaml 的 `KEEP_IMAGE_NAMESPACE` / `KEEP_IMAGE_ORIGINAL_TAG`（含 tag 回退到 chart 版本号）逻辑。
    - **chart**（PUSH_CHARTS）：`helm package .` 得 `.tgz` →
      `helm push <tgz> oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS[/子路径] $HELM_HTTP_FLAG`。

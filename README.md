@@ -49,8 +49,7 @@
 | `ACR_REGISTRY_ENDPOINT` | ACR 域名 | `registry.cn-hangzhou.aliyuncs.com` |
 | `ACR_REGISTRY_AK` | ACR 用户名 / AccessKey | `your-username` |
 | `ACR_REGISTRY_SK` | ACR 密码 / Secret | `your-password` |
-| `ACR_REGISTRY_NS` | **Docker 流程**镜像所在命名空间 | `my-namespace` |
-| `ACR_REGISTRY_IMAGES` | **Helm 流程**中 Chart 镜像推送到的命名空间 | `my-images` |
+| `ACR_REGISTRY_NS` | 镜像统一命名空间（Docker 流程 + Helm/git Chart 引用镜像） | `my-namespace` |
 
 **腾讯云 TCR（仅 Helm 流程推 Chart 用到）**
 
@@ -145,7 +144,7 @@ charts:
 
 假设 `TCR_REGISTRY_ENDPOINT=my.tencentcloudcr.com`、`TCR_REGISTRY_NS=charts`，触发后分两部分：
 
-**① Chart 引用的镜像** → 推到 ACR（`ACR_REGISTRY_IMAGES` 命名空间），tag 规则：
+**① Chart 引用的镜像** → 推到 ACR（`ACR_REGISTRY_NS` 命名空间），tag 规则：
 
 - `keep_image_original_tag=true`（默认）：用镜像原始 tag，如 `prometheus:v3.13.0`。
 - `keep_image_original_tag=false`：用 Chart 版本号，如 `prometheus:29.14.0`。

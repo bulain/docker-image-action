@@ -64,7 +64,7 @@ CHART_PLAIN_HTTP:     "${{ github.event.inputs.chart_plain_http || 'true' }}"
 - `ACR_REGISTRY_ENDPOINT` —— ACR 地址。
 - `ACR_REGISTRY_AK` —— 登录用户名（AccessKey）。
 - `ACR_REGISTRY_SK` —— 登录密码（Secret）。
-- `ACR_REGISTRY_IMAGES` —— chart 引用的镜像推送到的 ACR 命名空间。
+- `ACR_REGISTRY_NS` —— chart 引用的镜像推送到的 ACR 命名空间。
 
 chart 推送到 TCR（支持 OCI chart 的独立 registry）：
 
@@ -102,7 +102,7 @@ oci://ghcr.io/some-org/some-chart:1.2.3
 ### 镜像 → ACR
 
 ```
-$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/<name_path>:<chart 版本号>
+$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/<name_path>:<chart 版本号>
 ```
 
 - **tag 用 chart 版本号**（`$tag`），而非镜像自身的原 tag。同一 chart 引用的所有镜像
@@ -166,7 +166,7 @@ while IFS= read -r line || [ -n "$line" ]; do
         else
             image_name=$(echo "$path" | awk -F'/' '{print $NF}')
         fi
-        new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$tag"
+        new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/$image_name:$tag"
         docker tag "$img" "$new_img"
         docker push "$new_img"
         docker rmi "$img" "$new_img" || true
@@ -207,5 +207,5 @@ done < charts.properties
 - 提交前对脚本片段做 `bash -n` 语法检查，并验证命名空间/tag 提取逻辑。
 - 首次运行用 `workflow_dispatch` 手动触发，`charts.properties` 只放一个已知 chart
   （`bitnamicharts/redis:27.0.13`）验证端到端。
-- 检查镜像出现在 ACR 的 `$ACR_REGISTRY_IMAGES/` 下、chart 出现在 TCR 的
+- 检查镜像出现在 ACR 的 `$ACR_REGISTRY_NS/` 下、chart 出现在 TCR 的
   `$TCR_REGISTRY_NS/` 下，并可分别 `docker pull` / `helm pull` 回来。

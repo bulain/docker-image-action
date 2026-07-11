@@ -35,7 +35,7 @@ env:
   ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
   ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
   ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
-  ACR_REGISTRY_IMAGES: "${{ secrets.ACR_REGISTRY_IMAGES }}"
+  ACR_REGISTRY_NS: "${{ secrets.ACR_REGISTRY_NS }}"
   TCR_REGISTRY_ENDPOINT: "${{ secrets.TCR_REGISTRY_ENDPOINT }}"
   TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
@@ -149,7 +149,7 @@ jobs:
                         # 用 chart 版本号作 tag
                         image_tag="$tag"
                     fi
-                    new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$image_tag"
+                    new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_NS/$image_name:$image_tag"
                     echo "docker tag $img $new_img"
                     docker tag "$img" "$new_img"
                     echo "docker push $new_img"
