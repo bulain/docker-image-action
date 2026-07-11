@@ -21,3 +21,10 @@ charts:
   # https://github.com/grafana-community/helm-charts
   # - oci://ghcr.io/grafana-community/helm-charts/grafana:12.7.2
   # - oci://ghcr.io/grafana-community/helm-charts/loki:18.4.2
+
+  # https://github.com/OT-CONTAINER-KIT/redis-operator
+   - oci://ghcr.io/ot-container-kit/charts/redis-operator:0.25.0
+   - oci://ghcr.io/ot-container-kit/charts/redis-sentinel:0.16.13
+   - oci://ghcr.io/ot-container-kit/charts/redis-cluster:0.17.4
+   - oci://ghcr.io/ot-container-kit/charts/redis-replication:0.17.0
+   - oci://ghcr.io/ot-container-kit/charts/redis:0.16.9
