@@ -10,7 +10,7 @@ on:
       push_images:
         description: "是否推送 chart 引用的镜像到 registry"
         type: boolean
-        default: false
+        default: true
       keep_image_namespace:
         description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
         type: boolean
@@ -42,7 +42,7 @@ env:
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
   # push 触发时 inputs 为空，fallback 到默认值：推 chart 不推镜像、镜像不保留命名空间、chart 保留、chart 走 HTTP
   PUSH_CHARTS: "${{ github.event.inputs.push_charts || 'true' }}"
-  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'false' }}"
+  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'true' }}"
   KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
   KEEP_IMAGE_ORIGINAL_TAG: "${{ github.event.inputs.keep_image_original_tag || 'true' }}"
   KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
