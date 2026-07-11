@@ -9,7 +9,9 @@
 未发布为 OCI，无法用现有流程处理，必须先 `git clone` + `helm package` 才能得到 `.tgz` 产物。
 
 首个用例：`percona/percona-helm-charts` 仓库的 `charts/ps-operator`
-（tag `ps-operator-1.2.0`，chart version 1.2.0，主镜像 `percona/percona-server-mysql-operator:1.2.0`）。
+（tag `ps-operator-1.2.0`，chart version 1.2.0）。该 chart 的 templates 只部署 operator 自身，
+`helm images get` 解析出的镜像仅 operator 主镜像 `percona/percona-server-mysql-operator:1.2.0` 一个；
+数据库、haproxy、backup、pmm 等镜像由运行时 CR（自定义资源）按需指定，不在 chart templates 内，故不随本 chart 搬运。
 
 ## 目标与产物
 
