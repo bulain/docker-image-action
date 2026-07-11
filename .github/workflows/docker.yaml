@@ -76,12 +76,10 @@ jobs:
           fi
           docker login -u $ACR_REGISTRY_AK -p $ACR_REGISTRY_SK $ACR_REGISTRY_ENDPOINT
 
-          while IFS= read -r line || [ -n "$line" ]; do
-              # 忽略空行与注释
-              [[ -z "$line" ]] && continue
-              if echo "$line" | grep -q '^\s*#'; then
-                  continue
-              fi
+          # 逐条读取 images.yaml 的 images 数组（注释掉的条目 yq 读不到，天然=禁用）
+          count=$(yq '.images | length' images.yaml)
+          for i in $(seq 0 $((count - 1))); do
+              line=$(yq ".images[$i]" images.yaml)
 
               echo "docker pull $line"
               docker pull $line
@@ -126,4 +124,4 @@ jobs:
               df -hT
               echo "=============================================================================="
 
-          done < images.properties
+          done

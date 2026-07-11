@@ -83,12 +83,10 @@ jobs:
 
           mkdir -p ./charts
 
-          while IFS= read -r line || [ -n "$line" ]; do
-              # 忽略空行与注释
-              [[ -z "$line" ]] && continue
-              if echo "$line" | grep -q '^\s*#'; then
-                  continue
-              fi
+          # 逐条读取 charts.yaml 的 charts 数组（注释掉的条目 yq 读不到，天然=禁用）
+          count=$(yq '.charts | length' charts.yaml)
+          for i in $(seq 0 $((count - 1))); do
+              line=$(yq ".charts[$i]" charts.yaml)
 
               # 拆出 tag（版本）与 chart 引用
               entry=$(echo "$line" | awk '{print $NF}')
@@ -171,4 +169,5 @@ jobs:
                 rm -f ./charts/*.tgz
               fi
 
-          done < charts.properties
+          done
+
