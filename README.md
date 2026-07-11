@@ -2,7 +2,7 @@
 
 把公网的 Docker 镜像与 Helm Chart 批量「搬运」（镜像）到私有 registry —— 阿里云 ACR 与腾讯云 TCR，供内网 / 受限网络环境拉取使用。
 
-- 镜像清单维护在 `images.properties`，Chart 清单维护在 `charts.properties`，一行一个，支持 `#` 注释。
+- 镜像清单维护在 `docker.yaml`，Chart 清单维护在 `helm.yaml`，YAML 数组每行一个条目，注释掉某行（保持 `#`）即禁用。
 - 由 GitHub Actions 执行：读清单 → `pull → tag → push → 清理`。
 - 无需本地环境，改清单、推 master（或手动触发）即可跑。
 
@@ -12,20 +12,20 @@
 
 | 流程 | 清单文件 | Workflow | 目标 registry |
 | --- | --- | --- | --- |
-| Docker 镜像 | `images.properties` | `.github/workflows/docker.yaml` | 阿里云 ACR |
-| Helm Chart | `charts.properties` | `.github/workflows/helm.yaml` | 镜像 → ACR，Chart 本身 → 腾讯云 TCR |
+| Docker 镜像 | `docker.yaml` | `.github/workflows/docker.yaml` | 阿里云 ACR |
+| Helm Chart | `helm.yaml` | `.github/workflows/helm.yaml` | 镜像 → ACR，Chart 本身 → 腾讯云 TCR |
 
 **为什么 Chart 推 TCR**：Helm Chart 是 OCI artifact，阿里云 ACR 个人版不支持存储 Chart，因此 Chart 本身推到 TCR；Chart 引用的镜像仍推到 ACR。
 
-- **Docker 流程**：逐行读 `images.properties` → `docker pull` → 重打 tag 到 ACR → `docker push` → `docker rmi` 释放磁盘。
-- **Helm 流程**：逐行读 `charts.properties` → 用 `helm template` 渲染后提取 `image:`/`initImage:` 字段解析 Chart 引用的镜像并逐个搬到 ACR（能识别 CR 里的镜像）→ `helm pull` 拉取 Chart 本身并 `helm push` 到 TCR。
+- **Docker 流程**：逐条读 `docker.yaml` → `docker pull` → 重打 tag 到 ACR → `docker push` → `docker rmi` 释放磁盘。
+- **Helm 流程**：逐条读 `helm.yaml` → 用 `helm template` 渲染后提取 `image:`/`initImage:` 字段解析 Chart 引用的镜像并逐个搬到 ACR（能识别 CR 里的镜像）→ `helm pull` 拉取 Chart 本身并 `helm push` 到 TCR。
 
 ## 快速上手
 
 **3 步搬运一个镜像 / Chart：**
 
 1. **配置 Secrets**（仅首次）：在仓库 `Settings → Secrets and variables → Actions` 配好 ACR / TCR 凭据，详见 [前置配置：GitHub Secrets](#前置配置github-secrets)。
-2. **编辑清单**：在 `images.properties`（镜像）或 `charts.properties`（Chart）里，取消注释你要搬运的行，或新增一行。
+2. **编辑清单**：在 `docker.yaml`（镜像）或 `helm.yaml`（Chart）里，取消注释你要搬运的行，或新增一行。
 
    ```diff
    - #mysql:9.7
@@ -63,28 +63,30 @@
 
 ## 清单格式
 
-两份清单都是纯文本，**一行一个条目**，`#` 开头为注释，空行忽略。
+两份清单都是 YAML，条目放在顶层数组下（`docker.yaml` 用 `images:`，`helm.yaml` 用 `charts:`），**一行一个条目**，注释掉某行（保持 `#`）即禁用，空行忽略。
 
-### `images.properties`（Docker 镜像）
+### `docker.yaml`（Docker 镜像）
 
 - **短写**：默认从 docker.io 拉取，如 `mysql:9.7`、`redis:7.4-alpine`。
 - **完整写法**：任意 registry，如 `ghcr.io/valhalla/valhalla-scripted:3.6.2`、`quay.io/prometheus/prometheus:v3.13.0`。
-- **指定架构**（可选）：行首加 `--platform`，如 `--platform linux/amd64 rancher/mirrored-pause:3.6`。搬运后架构信息会作为前缀拼进镜像名（如 `linux_amd64_pause:3.6`）。
+- **指定架构**（可选）：行内加 `--platform`，如 `--platform linux/amd64 rancher/mirrored-pause:3.6`。搬运后架构信息会作为前缀拼进镜像名（如 `linux_amd64_pause:3.6`）。
 
-```properties
-mysql:9.7
-ghcr.io/valhalla/valhalla-scripted:3.6.2
---platform linux/amd64 rancher/mirrored-pause:3.6
+```yaml
+images:
+  - mysql:9.7
+  - ghcr.io/valhalla/valhalla-scripted:3.6.2
+  - --platform linux/amd64 rancher/mirrored-pause:3.6
 ```
 
-### `charts.properties`（Helm Chart）
+### `helm.yaml`（Helm Chart）
 
 - 格式 `oci://<域名>/<路径>/<chart名>:<版本>`，`:` 后为 Chart 版本号。
 - **短写**：省略 `oci://` 域名时默认补全为 `oci://registry-1.docker.io/`，如 `bitnamicharts/redis:27.0.13`。
 - **完整写法**：`oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0`。
 
-```properties
-oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
+```yaml
+charts:
+  - oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 ```
 
 ## 触发方式与开关参考
@@ -118,10 +120,10 @@ oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 
 ### 示例 A：搬运一个 Docker 镜像
 
-清单 `images.properties` 中有一行：
+清单 `docker.yaml` 中有一行：
 
-```properties
-bitnami/redis:7.4
+```yaml
+  - bitnami/redis:7.4
 ```
 
 假设 `ACR_REGISTRY_ENDPOINT=registry.cn-hangzhou.aliyuncs.com`、`ACR_REGISTRY_NS=my-ns`，触发后：
@@ -135,10 +137,10 @@ bitnami/redis:7.4
 
 ### 示例 B：搬运一个 Helm Chart
 
-清单 `charts.properties` 中有一行：
+清单 `helm.yaml` 中有一行：
 
-```properties
-oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
+```yaml
+  - oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 ```
 
 假设 `TCR_REGISTRY_ENDPOINT=my.tencentcloudcr.com`、`TCR_REGISTRY_NS=charts`，触发后分两部分：
