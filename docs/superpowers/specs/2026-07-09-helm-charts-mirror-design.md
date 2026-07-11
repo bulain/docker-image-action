@@ -40,23 +40,15 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 
 ## 触发方式与开关
 
-- 触发：`workflow_dispatch`（手动，可设开关）+ `push: [master]`（自动）。
-- push 触发时 inputs 为空，各开关 fallback 到默认值。
+- 触发：`workflow_dispatch`（手动，无参数）+ `push: [master]`（自动）。
+- 搬运开关（`push_charts` / `push_images` / `keep_image_namespace` / `keep_image_original_tag` / `keep_chart_namespace`）已抽到根目录 `config.yaml`，运行时用 `yq '.key // "默认"' config.yaml` 读取（带 fallback），不再走 workflow input。
 
-| input | 类型 | 默认 | 说明 |
-| --- | --- | --- | --- |
-| `keep_image_namespace` | boolean | `false` | 推送镜像时是否保留原命名空间段（如 `bitnami/redis`）。|
-| `keep_chart_namespace` | boolean | `true` | 推送 chart 时是否把源命名空间作为子路径（如 `bitnamicharts`）。|
+| 开关（config.yaml key） | 默认 | 说明 |
+| --- | --- | --- |
+| `keep_image_namespace` | `false` | 推送镜像时是否保留原命名空间段（如 `bitnami/redis`）。|
+| `keep_chart_namespace` | `true` | 推送 chart 时是否把源命名空间作为子路径（如 `bitnamicharts`）。|
 
-明文 HTTP 开关 `TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP` 不是 input，而是来自 Secrets（可选，未配置默认 `true`）：`TCR_PLAIN_HTTP` 决定 `helm push` 是否走 `--plain-http`；`ACR_PLAIN_HTTP` 决定推送镜像到 ACR 是否走明文 HTTP（login 前把 endpoint 配进 docker `insecure-registries` 并重启）。关闭则走 HTTPS。
-
-对应 env fallback：
-
-```yaml
-KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
-KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
-TCR_PLAIN_HTTP:     "${{ secrets.TCR_PLAIN_HTTP || 'true' }}"
-```
+明文 HTTP 开关 `TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP` 不在 config.yaml，而是来自 Secrets（可选，未配置默认 `true`）：`TCR_PLAIN_HTTP` 决定 `helm push` 是否走 `--plain-http`；`ACR_PLAIN_HTTP` 决定推送镜像到 ACR 是否走明文 HTTP（login 前把 endpoint 配进 docker `insecure-registries` 并重启）。关闭则走 HTTPS。
 
 ## Secrets / 环境变量
 

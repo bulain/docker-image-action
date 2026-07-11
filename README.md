@@ -90,33 +90,30 @@ charts:
   - oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
 ```
 
+### `config.yaml`（搬运行为开关）
+
+根目录 `config.yaml` 集中放搬运行为开关，三个 workflow 运行时用 `yq` 读取。详见下方「触发方式与开关参考」。
+
 ## 触发方式与开关参考
 
 **触发方式**（两条流程相同）：
 
-- **`push: master`**：自动运行。此时 inputs 为空，所有开关**回退到 env 里的默认值**（见下表 fallback 列）。
-- **`workflow_dispatch`**：手动运行，可在 UI 逐项调整开关。
+- **`push: master`**：自动运行。
+- **`workflow_dispatch`**：手动运行（无参数勾选，行为由 `config.yaml` 决定）。
 
-### Docker workflow 开关
+**搬运行为开关**统一放在根目录 `config.yaml`，所有触发方式运行时用 `yq` 读取。改开关 = 编辑该文件（注释掉某行会回退到默认值）：
 
-| 开关 | 默认 (fallback) | 说明 |
-| --- | --- | --- |
-| `push_images` | `true` | 是否推送镜像。关闭则跳过登录与整个搬运循环。 |
-| `keep_image_namespace` | `false` | 是否保留镜像原命名空间。`true` → `bitnami/redis`；`false` → `redis`。 |
+| 开关 | 默认 | 用于 | 说明 |
+| --- | --- | --- | --- |
+| `push_images` | `true` | 全部 | 是否推送镜像。关闭则跳过登录与搬运循环。 |
+| `push_charts` | `true` | Helm / git | 是否推送 Chart 本身到 TCR。 |
+| `keep_image_namespace` | `false` | 全部 | 镜像是否保留原命名空间段。`true` → `bitnami/redis`；`false` → `redis`。 |
+| `keep_image_original_tag` | `true` | Helm / git | `true` 用镜像原始 tag；`false` 用 Chart 版本号当 tag。 |
+| `keep_chart_namespace` | `true` | Helm / git | Chart 是否保留命名空间子路径（如 `grafana-community/helm-charts`）。 |
 
-### Helm workflow 开关
+> Docker workflow 只读 `push_images` / `keep_image_namespace`，其余 chart 相关开关忽略。
 
-| 开关 | 默认 (fallback) | 说明 |
-| --- | --- | --- |
-| `push_charts` | `true` | 是否推送 Chart 本身到 TCR。 |
-| `push_images` | `true` | 是否推送 Chart 引用的镜像到 ACR。 |
-| `keep_image_namespace` | `false` | 镜像是否保留原命名空间段。 |
-| `keep_image_original_tag` | `true` | `true` 用镜像原始 tag；`false` 用 Chart 版本号当 tag。 |
-| `keep_chart_namespace` | `true` | Chart 是否保留域名之后的完整子路径（如 `grafana-community/helm-charts`）。 |
-
-> 明文 HTTP 开关（`TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP`）由 Secrets 控制（不是 input），见上方 Secrets 表。
-
-> **注意**：`push: master` 触发时全部按 fallback 值运行。要改自动触发的默认行为，需修改 workflow env 里的 `|| '...'` 回退值。
+> 明文 HTTP 开关（`TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP`）由 Secrets 控制（不是 config.yaml），见上方 Secrets 表。
 
 ## 走查示例
 

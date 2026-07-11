@@ -2,27 +2,6 @@ name: Git Charts
 
 on:
   workflow_dispatch:
-    inputs:
-      push_charts:
-        description: "是否推送 chart 本身到 registry"
-        type: boolean
-        default: true
-      push_images:
-        description: "是否推送 chart 引用的镜像到 registry"
-        type: boolean
-        default: true
-      keep_image_namespace:
-        description: "推送镜像时是否保留原命名空间（如 percona/percona-server）"
-        type: boolean
-        default: false
-      keep_image_original_tag:
-        description: "推送镜像时是否保留镜像原始 tag（关闭则用 chart 版本号作 tag）"
-        type: boolean
-        default: true
-      keep_chart_namespace:
-        description: "推送 chart 时是否保留清单里的 namespace 作子路径"
-        type: boolean
-        default: true
   push:
     branches: [ master ]
 
@@ -38,13 +17,7 @@ env:
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
   TCR_PLAIN_HTTP: "${{ secrets.TCR_PLAIN_HTTP || 'true' }}"
-  # push 触发时 inputs 为空，fallback 到默认值：推 chart 到 TCR、推镜像到 ACR、
-  # 镜像不保留命名空间、镜像保留原 tag、chart 保留 namespace
-  PUSH_CHARTS: "${{ github.event.inputs.push_charts || 'true' }}"
-  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'true' }}"
-  KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
-  KEEP_IMAGE_ORIGINAL_TAG: "${{ github.event.inputs.keep_image_original_tag || 'true' }}"
-  KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
+  # 搬运行为开关统一从根目录 config.yaml 读取（见脚本 step 开头）
 
 jobs:
 
@@ -61,6 +34,12 @@ jobs:
       - name: Clone git-source charts, mirror images to ACR and push charts to TCR
         run: |
           set -e
+          # 从 config.yaml 读取搬运开关（缺失则回退默认值）
+          PUSH_CHARTS=$(yq '.push_charts // "true"' config.yaml)
+          PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
+          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "false"' config.yaml)
+          KEEP_IMAGE_ORIGINAL_TAG=$(yq '.keep_image_original_tag // "true"' config.yaml)
+          KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace // "true"' config.yaml)
           # 镜像推送到 ACR（仅在推送镜像时登录）
           if [ "$PUSH_IMAGES" = "true" ]; then
               # ACR_PLAIN_HTTP=true 时把 ACR endpoint 配进 insecure-registries，让 docker push 走明文 HTTP

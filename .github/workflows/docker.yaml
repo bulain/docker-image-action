@@ -2,15 +2,6 @@ name: Docker
 
 on:
   workflow_dispatch:
-    inputs:
-      push_images:
-        description: "是否推送镜像到 registry"
-        type: boolean
-        default: true
-      keep_image_namespace:
-        description: "推送镜像时是否保留原命名空间（如 bitnami/redis）"
-        type: boolean
-        default: false
   push:
     branches: [ master ]
 
@@ -21,9 +12,7 @@ env:
   ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
   ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
   ACR_PLAIN_HTTP: "${{ secrets.ACR_PLAIN_HTTP || 'true' }}"
-  # push 触发时 inputs 为空，fallback 到默认值：推送镜像、不保留命名空间
-  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'true' }}"
-  KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
+  # 搬运行为开关统一从根目录 config.yaml 读取（见脚本 step 开头）
 
 jobs:
 
@@ -75,6 +64,9 @@ jobs:
 
       - name: Build and push image
         run: |
+          # 从 config.yaml 读取搬运开关（缺失则回退默认值）
+          PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
+          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "false"' config.yaml)
           # push_images 关闭时跳过登录与整个搬运循环
           if [ "$PUSH_IMAGES" != "true" ]; then
               echo "跳过（push_images 关闭）"

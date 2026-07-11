@@ -55,21 +55,26 @@ charts:
 
 ### 触发
 
-`workflow_dispatch`（带布尔 inputs）+ `push: master`。
-push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallback 决定默认行为，
+`workflow_dispatch`（手动，无参数）+ `push: master`。
+搬运开关运行时从根目录 `config.yaml` 用 `yq '.key // "默认"' config.yaml` 读取（带 fallback），
 与现有两个 workflow 约定一致。
 
-### 开关（env，复用 helm.yaml 语义）
+### 开关（来自 config.yaml，复用 helm.yaml 语义）
+
+| config.yaml key | 默认 | 作用 |
+|-----|------|------|
+| `push_charts` | true | 是否推 chart 到 TCR |
+| `push_images` | true | 是否推镜像到 ACR |
+| `keep_image_namespace` | false | 推镜像是否保留命名空间段（如 `percona/xxx`） |
+| `keep_image_original_tag` | true | 推镜像是否保留原始 tag（关则用 chart 版本号） |
+| `keep_chart_namespace` | true | 推 chart 是否加子路径 |
+
+明文 HTTP 开关来自 Secrets（非 config.yaml）：
 
 | env | 默认 | 作用 |
 |-----|------|------|
-| `PUSH_CHARTS` | true | 是否推 chart 到 TCR |
-| `PUSH_IMAGES` | true | 是否推镜像到 ACR |
-| `KEEP_IMAGE_NAMESPACE` | false | 推镜像是否保留命名空间段（如 `percona/xxx`） |
-| `KEEP_IMAGE_ORIGINAL_TAG` | true | 推镜像是否保留原始 tag（关则用 chart 版本号） |
-| `KEEP_CHART_NAMESPACE` | true | 推 chart 是否加子路径 |
-| `TCR_PLAIN_HTTP` | true | helm push 走 `--plain-http`（来自 Secrets，非 input；关则 HTTPS） |
-| `ACR_PLAIN_HTTP` | true | docker push 到 ACR 走明文 HTTP（来自 Secrets，非 input；login 前配 `insecure-registries` 并重启，关则 HTTPS） |
+| `TCR_PLAIN_HTTP` | true | helm push 走 `--plain-http`（来自 Secrets；关则 HTTPS） |
+| `ACR_PLAIN_HTTP` | true | docker push 到 ACR 走明文 HTTP（来自 Secrets；login 前配 `insecure-registries` 并重启，关则 HTTPS） |
 
 ### Secrets
 

@@ -30,19 +30,14 @@ chart 是 OCI artifact，阿里云 ACR 个人版不支持，改用其他 registr
 
 ## 触发方式与开关
 
-- 触发：`workflow_dispatch`（手动，可设开关）+ `push: [master]`（自动）。
-- push 触发时 inputs 为空，开关 fallback 到默认值。
+- 触发：`workflow_dispatch`（手动，无参数）+ `push: [master]`（自动）。
+- 搬运开关（`push_images` / `keep_image_namespace`）已抽到根目录 `config.yaml`，运行时用 `yq '.key // "默认"' config.yaml` 读取（带 fallback），不再走 workflow input。
 
-| input | 类型 | 默认 | 说明 |
-| --- | --- | --- | --- |
-| `keep_image_namespace` | boolean | `false` | 推送时是否保留镜像的原命名空间段（如 `bitnami/redis`）。|
+| 开关（config.yaml key） | 默认 | 说明 |
+| --- | --- | --- |
+| `keep_image_namespace` | `false` | 推送时是否保留镜像的原命名空间段（如 `bitnami/redis`）。|
 
-对应 env fallback：
-
-```yaml
-KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
-ACR_PLAIN_HTTP:       "${{ secrets.ACR_PLAIN_HTTP || 'true' }}"
-```
+`ACR_PLAIN_HTTP` 仍来自 Secrets（`"${{ secrets.ACR_PLAIN_HTTP || 'true' }}"`）。
 
 `ACR_PLAIN_HTTP`（来自 Secrets，可选，未配置默认 `true`）：推送镜像到 ACR 走明文 HTTP。因 `docker push` 无 `--plain-http` flag，为 `true` 时在扩容后重启 docker 前把 `$ACR_REGISTRY_ENDPOINT` 写进 `/etc/docker/daemon.json` 的 `insecure-registries`，用于 ACR endpoint 指向内网 HTTP registry 的场景。
 
