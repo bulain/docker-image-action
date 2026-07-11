@@ -1,0 +1,207 @@
+name: Git Charts
+
+on:
+  workflow_dispatch:
+    inputs:
+      push_charts:
+        description: "是否推送 chart 本身到 registry"
+        type: boolean
+        default: true
+      push_images:
+        description: "是否推送 chart 引用的镜像到 registry"
+        type: boolean
+        default: true
+      keep_image_namespace:
+        description: "推送镜像时是否保留原命名空间（如 percona/percona-server）"
+        type: boolean
+        default: false
+      keep_image_original_tag:
+        description: "推送镜像时是否保留镜像原始 tag（关闭则用 chart 版本号作 tag）"
+        type: boolean
+        default: true
+      keep_chart_namespace:
+        description: "推送 chart 时是否保留清单里的 namespace 作子路径"
+        type: boolean
+        default: true
+      chart_plain_http:
+        description: "推送 chart 时使用明文 HTTP（--plain-http），关闭则用 HTTPS"
+        type: boolean
+        default: true
+  push:
+    branches: [ master ]
+
+
+env:
+  ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
+  ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
+  ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
+  ACR_REGISTRY_IMAGES: "${{ secrets.ACR_REGISTRY_IMAGES }}"
+  TCR_REGISTRY_ENDPOINT: "${{ secrets.TCR_REGISTRY_ENDPOINT }}"
+  TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
+  TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
+  TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
+  # push 触发时 inputs 为空，fallback 到默认值：推 chart 到 TCR、推镜像到 ACR、
+  # 镜像不保留命名空间、镜像保留原 tag、chart 保留 namespace、chart 走 HTTP
+  PUSH_CHARTS: "${{ github.event.inputs.push_charts || 'true' }}"
+  PUSH_IMAGES: "${{ github.event.inputs.push_images || 'true' }}"
+  KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
+  KEEP_IMAGE_ORIGINAL_TAG: "${{ github.event.inputs.keep_image_original_tag || 'true' }}"
+  KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
+  CHART_PLAIN_HTTP: "${{ github.event.inputs.chart_plain_http || 'true' }}"
+
+jobs:
+
+  mirror:
+    name: Mirror Git-source Helm Charts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Before freeing up disk space
+        run: |
+          echo "Before freeing up disk space"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="
+
+      # 增加可用磁盘空间：percona operator/db 依赖镜像多且大
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 2048
+          swap-size-mb: 128
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          build-mount-path: '/var/lib/docker/'
+
+      - name: Restart docker
+        run: sudo service docker restart
+
+      - name: Free up disk space complete
+        run: |
+          echo "Free up disk space complete"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="
+
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install helm-images plugin
+        run: helm plugin install https://github.com/nikhilsbhat/helm-images --verify=false
+
+      - name: Clone git-source charts, mirror images to ACR and push charts to TCR
+        run: |
+          set -e
+          # 镜像推送到 ACR（仅在推送镜像时登录）
+          if [ "$PUSH_IMAGES" = "true" ]; then
+              docker login -u "$ACR_REGISTRY_AK" -p "$ACR_REGISTRY_SK" "$ACR_REGISTRY_ENDPOINT"
+          fi
+          # chart 走 HTTP 还是 HTTPS
+          if [ "$CHART_PLAIN_HTTP" = "true" ]; then
+              HELM_HTTP_FLAG="--plain-http"
+          else
+              HELM_HTTP_FLAG=""
+          fi
+          # chart 推送到支持 OCI chart 的 registry（ACR 个人版不支持 helm chart；仅在推送 chart 时登录）
+          if [ "$PUSH_CHARTS" = "true" ]; then
+              helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
+          fi
+
+          # 两开关皆关时空操作
+          if [ "$PUSH_IMAGES" != "true" ] && [ "$PUSH_CHARTS" != "true" ]; then
+              echo "跳过（push_charts 与 push_images 均关闭）"
+              exit 0
+          fi
+
+          mkdir -p ./workspace
+
+          # 逐条读取清单（用进程替换避免子 shell，让 set -e 在循环体内生效）
+          count=$(yq '.charts | length' git-charts.yaml)
+          for i in $(seq 0 $((count - 1))); do
+              repo=$(yq ".charts[$i].repo" git-charts.yaml)
+              path=$(yq ".charts[$i].path" git-charts.yaml)
+              ref=$(yq ".charts[$i].ref" git-charts.yaml)
+              namespace=$(yq ".charts[$i].namespace" git-charts.yaml)
+
+              echo "=============================================================================="
+              echo "处理 chart: $repo // $path @ $ref"
+              echo "=============================================================================="
+
+              # ---- clone 并定位 chart 目录 ----
+              workdir="./workspace/chart-$i"
+              rm -rf "$workdir"
+              git clone --depth 1 --branch "$ref" "$repo" "$workdir"
+              chart_dir="$workdir/$path"
+
+              # chart 版本号从 Chart.yaml 读取（镜像 tag 回退用）
+              tag=$(yq '.version' "$chart_dir/Chart.yaml")
+              echo "chart 版本: $tag"
+
+              # 拉取子依赖（若声明）
+              if [ -f "$chart_dir/Chart.yaml" ] && [ "$(yq '.dependencies | length' "$chart_dir/Chart.yaml")" != "0" ]; then
+                  echo "helm dependency build $chart_dir"
+                  helm dependency build "$chart_dir"
+              fi
+
+              # ---- 1. 解析 chart 引用的镜像并逐个搬运到 ACR ----
+              if [ "$PUSH_IMAGES" = "true" ]; then
+                echo "helm images get $chart_dir"
+                # awk '!seen[$0]++' 按原始字符串去重，保留原顺序
+                while read -r img; do
+                    [[ -z "$img" ]] && continue
+                    echo "docker pull $img"
+                    docker pull "$img"
+                    # 去掉 @sha256 摘要与原 tag，得到镜像路径
+                    p="${img%%@*}"
+                    p="${p%:*}"
+                    if [ "$KEEP_IMAGE_NAMESPACE" = "true" ]; then
+                        # 保留命名空间段（去掉 registry 域名），如 percona/percona-server
+                        image_name=$(echo "$p" | awk -F'/' '{if (NF>=2) print $(NF-1)"/"$NF; else print $NF}')
+                    else
+                        # 只留镜像名，如 percona-server
+                        image_name=$(echo "$p" | awk -F'/' '{print $NF}')
+                    fi
+                    # 决定新镜像的 tag
+                    if [ "$KEEP_IMAGE_ORIGINAL_TAG" = "true" ]; then
+                        # 保留镜像原始 tag；无 @sha256 前的 tag 时回退到 chart 版本号
+                        no_digest="${img%%@*}"
+                        orig_tag="${no_digest##*:}"
+                        if [ "$orig_tag" = "$no_digest" ]; then
+                            image_tag="$tag"
+                        else
+                            image_tag="$orig_tag"
+                        fi
+                    else
+                        # 用 chart 版本号作 tag
+                        image_tag="$tag"
+                    fi
+                    new_img="$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/$image_name:$image_tag"
+                    echo "docker tag $img $new_img"
+                    docker tag "$img" "$new_img"
+                    echo "docker push $new_img"
+                    docker push "$new_img"
+                    # 逐个清理，控制磁盘
+                    docker rmi "$img" "$new_img" || true
+                done < <(helm images get "$chart_dir" | awk '!seen[$0]++')
+              fi
+
+              # ---- 2. package 并 push chart 本身到 TCR ----
+              if [ "$PUSH_CHARTS" = "true" ]; then
+                echo "helm package $chart_dir"
+                helm package "$chart_dir" -d ./workspace
+                tgz=$(ls -t ./workspace/*.tgz | head -1)
+                if [ "$KEEP_CHART_NAMESPACE" = "true" ] && [ -n "$namespace" ] && [ "$namespace" != "null" ]; then
+                    chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS/$namespace"
+                else
+                    chart_target="oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS"
+                fi
+                echo "helm push $tgz $chart_target"
+                helm push "$tgz" "$chart_target" $HELM_HTTP_FLAG
+                rm -f "$tgz"
+              fi
+
+              # clone 目录清理，控制磁盘
+              rm -rf "$workdir"
+          done
