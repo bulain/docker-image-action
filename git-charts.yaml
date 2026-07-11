@@ -23,11 +23,11 @@ charts:
 #    path: operator/chart/nacos-operator
 #    ref: v1.0.2
 #    namespace: nacos-group/helm-charts
-  - repo: https://github.com/minio/operator.git
-    path: helm/operator
-    ref: v7.1.1
-    namespace: minio/helm-charts
-  - repo: https://github.com/minio/operator.git
-    path: helm/tenant
-    ref: v7.1.1
-    namespace: minio/helm-charts
+#  - repo: https://github.com/minio/operator.git
+#    path: helm/operator
+#    ref: v7.1.1
+#    namespace: minio/helm-charts
+#  - repo: https://github.com/minio/operator.git
+#    path: helm/tenant
+#    ref: v7.1.1
+#    namespace: minio/helm-charts

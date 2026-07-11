@@ -47,15 +47,15 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 | --- | --- | --- | --- |
 | `keep_image_namespace` | boolean | `false` | 推送镜像时是否保留原命名空间段（如 `bitnami/redis`）。|
 | `keep_chart_namespace` | boolean | `true` | 推送 chart 时是否把源命名空间作为子路径（如 `bitnamicharts`）。|
-| `tcr_plain_http` | boolean | `true` | chart 操作是否走明文 HTTP（`--plain-http`），关闭则走 HTTPS。|
-| `acr_plain_http` | boolean | `true` | 推送镜像到 ACR 是否走明文 HTTP（login 前把 endpoint 配进 docker `insecure-registries` 并重启），关闭则走 HTTPS。|
+
+明文 HTTP 开关 `TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP` 不是 input，而是来自 Secrets（可选，未配置默认 `true`）：`TCR_PLAIN_HTTP` 决定 `helm push` 是否走 `--plain-http`；`ACR_PLAIN_HTTP` 决定推送镜像到 ACR 是否走明文 HTTP（login 前把 endpoint 配进 docker `insecure-registries` 并重启）。关闭则走 HTTPS。
 
 对应 env fallback：
 
 ```yaml
 KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
 KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
-TCR_PLAIN_HTTP:     "${{ github.event.inputs.tcr_plain_http || 'true' }}"
+TCR_PLAIN_HTTP:     "${{ secrets.TCR_PLAIN_HTTP || 'true' }}"
 ```
 
 ## Secrets / 环境变量

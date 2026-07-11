@@ -68,8 +68,8 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
 | `KEEP_IMAGE_NAMESPACE` | false | 推镜像是否保留命名空间段（如 `percona/xxx`） |
 | `KEEP_IMAGE_ORIGINAL_TAG` | true | 推镜像是否保留原始 tag（关则用 chart 版本号） |
 | `KEEP_CHART_NAMESPACE` | true | 推 chart 是否加子路径 |
-| `TCR_PLAIN_HTTP` | true | helm push 走 `--plain-http`（关则 HTTPS） |
-| `ACR_PLAIN_HTTP` | true | docker push 到 ACR 走明文 HTTP（login 前配 `insecure-registries` 并重启，关则 HTTPS） |
+| `TCR_PLAIN_HTTP` | true | helm push 走 `--plain-http`（来自 Secrets，非 input；关则 HTTPS） |
+| `ACR_PLAIN_HTTP` | true | docker push 到 ACR 走明文 HTTP（来自 Secrets，非 input；login 前配 `insecure-registries` 并重启，关则 HTTPS） |
 
 ### Secrets
 

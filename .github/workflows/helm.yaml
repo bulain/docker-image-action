@@ -23,14 +23,6 @@ on:
         description: "推送 chart 时是否保留域名之后的完整路径作子路径（如 grafana-community/helm-charts）"
         type: boolean
         default: true
-      tcr_plain_http:
-        description: "推送 chart 时使用明文 HTTP（--plain-http），关闭则用 HTTPS"
-        type: boolean
-        default: true
-      acr_plain_http:
-        description: "推送镜像到 ACR 时走明文 HTTP（ACR endpoint 为内网 HTTP registry 时开启），关闭则用 HTTPS"
-        type: boolean
-        default: true
   push:
     branches: [ master ]
 
@@ -40,18 +32,18 @@ env:
   ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
   ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
   ACR_REGISTRY_NS: "${{ secrets.ACR_REGISTRY_NS }}"
+  ACR_PLAIN_HTTP: "${{ secrets.ACR_PLAIN_HTTP || 'true' }}"
   TCR_REGISTRY_ENDPOINT: "${{ secrets.TCR_REGISTRY_ENDPOINT }}"
   TCR_REGISTRY_AK: "${{ secrets.TCR_REGISTRY_AK }}"
   TCR_REGISTRY_SK: "${{ secrets.TCR_REGISTRY_SK }}"
   TCR_REGISTRY_NS: "${{ secrets.TCR_REGISTRY_NS }}"
-  # push 触发时 inputs 为空，fallback 到默认值：推 chart 不推镜像、镜像不保留命名空间、chart 保留、chart 走 HTTP、ACR 走 HTTP
+  TCR_PLAIN_HTTP: "${{ secrets.TCR_PLAIN_HTTP || 'true' }}"
+  # push 触发时 inputs 为空，fallback 到默认值：推 chart 不推镜像、镜像不保留命名空间、chart 保留
   PUSH_CHARTS: "${{ github.event.inputs.push_charts || 'true' }}"
   PUSH_IMAGES: "${{ github.event.inputs.push_images || 'true' }}"
   KEEP_IMAGE_NAMESPACE: "${{ github.event.inputs.keep_image_namespace || 'false' }}"
   KEEP_IMAGE_ORIGINAL_TAG: "${{ github.event.inputs.keep_image_original_tag || 'true' }}"
   KEEP_CHART_NAMESPACE: "${{ github.event.inputs.keep_chart_namespace || 'true' }}"
-  TCR_PLAIN_HTTP: "${{ github.event.inputs.tcr_plain_http || 'true' }}"
-  ACR_PLAIN_HTTP: "${{ github.event.inputs.acr_plain_http || 'true' }}"
 
 jobs:
 

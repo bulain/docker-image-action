@@ -50,6 +50,7 @@
 | `ACR_REGISTRY_AK` | ACR 用户名 / AccessKey | `your-username` |
 | `ACR_REGISTRY_SK` | ACR 密码 / Secret | `your-password` |
 | `ACR_REGISTRY_NS` | 镜像统一命名空间（Docker 流程 + Helm/git Chart 引用镜像） | `my-namespace` |
+| `ACR_PLAIN_HTTP` | 可选。推送镜像到 ACR 是否走明文 HTTP（endpoint 为内网 HTTP registry 时用），未配置默认 `true` | `false` |
 
 **腾讯云 TCR（仅 Helm 流程推 Chart 用到）**
 
@@ -59,6 +60,7 @@
 | `TCR_REGISTRY_AK` | TCR 用户名 | `your-username` |
 | `TCR_REGISTRY_SK` | TCR 密码 | `your-password` |
 | `TCR_REGISTRY_NS` | Chart 推送到的命名空间 | `charts` |
+| `TCR_PLAIN_HTTP` | 可选。`helm push` 到 TCR 是否走明文 HTTP（`--plain-http`），未配置默认 `true` | `false` |
 
 ## 清单格式
 
@@ -101,7 +103,6 @@ charts:
 | --- | --- | --- |
 | `push_images` | `true` | 是否推送镜像。关闭则跳过登录与整个搬运循环。 |
 | `keep_image_namespace` | `false` | 是否保留镜像原命名空间。`true` → `bitnami/redis`；`false` → `redis`。 |
-| `acr_plain_http` | `true` | 推送镜像到 ACR 走明文 HTTP（把 endpoint 配进 docker `insecure-registries`）；`false` 用 HTTPS。 |
 
 ### Helm workflow 开关
 
@@ -112,8 +113,8 @@ charts:
 | `keep_image_namespace` | `false` | 镜像是否保留原命名空间段。 |
 | `keep_image_original_tag` | `true` | `true` 用镜像原始 tag；`false` 用 Chart 版本号当 tag。 |
 | `keep_chart_namespace` | `true` | Chart 是否保留域名之后的完整子路径（如 `grafana-community/helm-charts`）。 |
-| `tcr_plain_http` | `true` | `helm push` 用明文 HTTP（`--plain-http`）；`false` 用 HTTPS。 |
-| `acr_plain_http` | `true` | 推送镜像到 ACR 走明文 HTTP（把 endpoint 配进 docker `insecure-registries`）；`false` 用 HTTPS。 |
+
+> 明文 HTTP 开关（`TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP`）由 Secrets 控制（不是 input），见上方 Secrets 表。
 
 > **注意**：`push: master` 触发时全部按 fallback 值运行。要改自动触发的默认行为，需修改 workflow env 里的 `|| '...'` 回退值。
 
