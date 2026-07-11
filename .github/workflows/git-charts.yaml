@@ -36,7 +36,7 @@ jobs:
           # 从 config.yaml 读取搬运开关（缺失则回退默认值）
           PUSH_CHARTS=$(yq '.push_charts // "true"' config.yaml)
           PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
-          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "false"' config.yaml)
+          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "true"' config.yaml)
           KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace // "true"' config.yaml)
           # 镜像推送到 ACR（仅在推送镜像时登录）
           if [ "$PUSH_IMAGES" = "true" ]; then

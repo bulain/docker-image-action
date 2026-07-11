@@ -65,7 +65,7 @@ jobs:
         run: |
           # 从 config.yaml 读取搬运开关（缺失则回退默认值）
           PUSH_IMAGES=$(yq '.push_images // "true"' config.yaml)
-          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "false"' config.yaml)
+          KEEP_IMAGE_NAMESPACE=$(yq '.keep_image_namespace // "true"' config.yaml)
           # push_images 关闭时跳过登录与整个搬运循环
           if [ "$PUSH_IMAGES" != "true" ]; then
               echo "跳过（push_images 关闭）"

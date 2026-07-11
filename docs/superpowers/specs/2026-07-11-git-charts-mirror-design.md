@@ -65,7 +65,7 @@ charts:
 |-----|------|------|
 | `push_charts` | true | 是否推 chart 到 TCR |
 | `push_images` | true | 是否推镜像到 ACR |
-| `keep_image_namespace` | false | 推镜像是否保留命名空间段（如 `percona/xxx`） |
+| `keep_image_namespace` | true | 推镜像是否保留命名空间段（如 `percona/xxx`） |
 | `keep_chart_namespace` | true | 推 chart 是否加子路径 |
 
 明文 HTTP 开关来自 Secrets（非 config.yaml）：

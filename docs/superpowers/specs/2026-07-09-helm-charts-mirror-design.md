@@ -45,7 +45,7 @@ artifact，用 `docker pull` 处理并不合适，该行随后被回退。因此
 
 | 开关（config.yaml key） | 默认 | 说明 |
 | --- | --- | --- |
-| `keep_image_namespace` | `false` | 推送镜像时是否保留原命名空间段（如 `bitnami/redis`）。|
+| `keep_image_namespace` | `true` | 推送镜像时是否保留原命名空间段（如 `bitnami/redis`）。|
 | `keep_chart_namespace` | `true` | 推送 chart 时是否把源命名空间作为子路径（如 `bitnamicharts`）。|
 
 明文 HTTP 开关 `TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP` 不在 config.yaml，而是来自 Secrets（可选，未配置默认 `true`）：`TCR_PLAIN_HTTP` 决定 `helm push` 是否走 `--plain-http`；`ACR_PLAIN_HTTP` 决定推送镜像到 ACR 是否走明文 HTTP（login 前把 endpoint 配进 docker `insecure-registries` 并重启）。关闭则走 HTTPS。

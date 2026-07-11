@@ -2,5 +2,5 @@
 # 注释掉某行会回退到该开关的默认值（yq 的 // fallback）。
 push_images: true             # 是否推送镜像
 push_charts: true             # 是否推送 chart（docker 流程不用）
-keep_image_namespace: false   # 镜像是否保留原命名空间段（如 bitnami/redis）
+keep_image_namespace: true    # 镜像是否保留原命名空间段（如 bitnami/redis）
 keep_chart_namespace: true    # chart 是否保留命名空间子路径（docker 流程不用）

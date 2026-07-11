@@ -107,7 +107,7 @@ charts:
 | --- | --- | --- | --- |
 | `push_images` | `true` | 全部 | 是否推送镜像。关闭则跳过登录与搬运循环。 |
 | `push_charts` | `true` | Helm / git | 是否推送 Chart 本身到 TCR。 |
-| `keep_image_namespace` | `false` | 全部 | 镜像是否保留原命名空间段。`true` → `bitnami/redis`；`false` → `redis`。 |
+| `keep_image_namespace` | `true` | 全部 | 镜像是否保留原命名空间段。`true` → `bitnami/redis`；`false` → `redis`。 |
 | `keep_chart_namespace` | `true` | Helm / git | Chart 是否保留命名空间子路径（如 `grafana-community/helm-charts`）。 |
 
 > Docker workflow 只读 `push_images` / `keep_image_namespace`，其余 chart 相关开关忽略。

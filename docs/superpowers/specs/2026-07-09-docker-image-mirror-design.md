@@ -35,7 +35,7 @@ chart 是 OCI artifact，阿里云 ACR 个人版不支持，改用其他 registr
 
 | 开关（config.yaml key） | 默认 | 说明 |
 | --- | --- | --- |
-| `keep_image_namespace` | `false` | 推送时是否保留镜像的原命名空间段（如 `bitnami/redis`）。|
+| `keep_image_namespace` | `true` | 推送时是否保留镜像的原命名空间段（如 `bitnami/redis`）。|
 
 `ACR_PLAIN_HTTP` 仍来自 Secrets（`"${{ secrets.ACR_PLAIN_HTTP || 'true' }}"`）。
 
