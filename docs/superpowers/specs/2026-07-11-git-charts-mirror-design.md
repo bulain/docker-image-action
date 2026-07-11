@@ -13,15 +13,16 @@
 - `charts/ps-operator`（tag `ps-operator-1.2.0`，chart version 1.2.0）：templates 只部署 operator 自身，
   `helm images get` 解析出的镜像仅 operator 主镜像 `percona/percona-server-mysql-operator:1.2.0` 一个。
 - `charts/ps-db`（tag `ps-db-1.2.0`，chart version 1.2.0）：部署数据库实例，
-  引用 percona-server、haproxy、mysql-router、orchestrator、pmm-client、xtrabackup、toolkit 等多个组件镜像，
-  以 `helm images get` 实际解析结果为准。
+  引用 percona-server、haproxy、mysql-router、orchestrator、pmm-client、xtrabackup、toolkit 等多个组件镜像。
+  这些镜像藏在 `PerconaServerMySQL` 自定义资源（CR）的 `spec.*.image` 字段里，
+  `helm images get` 只识别标准工作负载、认不出 CR，故改用 `helm template` 渲染后提取 `image:`/`initImage:` 字段。
 
 ## 目标与产物
 
 新增一个**独立** workflow，处理"git 源码 chart"。对清单中每个 chart：
 
 - **Chart 本身** → `git clone` + `helm package` 打包成 `.tgz` → 以 OCI 格式 `helm push` 到 **TCR**。
-- **Chart 引用的镜像** → `helm images get` 解析全部镜像 → `docker pull → tag → push` 到 **ACR** → 逐个 `docker rmi` 释放磁盘。
+- **Chart 引用的镜像** → `helm template` 渲染后提取 `image:`/`initImage:` 字段（对标准工作负载与 CR 都有效）→ `docker pull → tag → push` 到 **ACR** → 逐个 `docker rmi` 释放磁盘。
 
 分工：chart 传 TCR，images 传 ACR（与 `helm.yaml` 一致）。
 
@@ -77,12 +78,13 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
 
 ### 步骤
 
-1. Checkout 本仓库 → `azure/setup-helm` → 装 `helm-images` 插件（同 helm.yaml）。
+1. Checkout 本仓库 → `azure/setup-helm`（`helm template` 为内置命令，无需额外插件）。
 2. 登录：`PUSH_IMAGES=true` 时 `docker login` ACR；`PUSH_CHARTS=true` 时 `helm registry login` TCR。
 3. 主脚本：`yq` 读 `git-charts.yaml`，遍历每条 `{repo, path, ref}`：
    - `git clone --depth 1 --branch <ref> <repo>` → 进入 `<path>` 目录。
    - `helm dependency build`（若 chart 声明了子依赖）。
-   - **镜像**（PUSH_IMAGES）：`helm images get . | awk '!seen[$0]++'` 去重后逐个
+   - **镜像**（PUSH_IMAGES）：`helm template .` 渲染后 `grep` 提取 `image:`/`initImage:`
+     字段值，去引号、去空、`awk '!seen[$0]++'` 去重后逐个
      `pull → tag → push` 到 `$ACR_REGISTRY_ENDPOINT/$ACR_REGISTRY_IMAGES/...`，逐个 `rmi`；
      沿用 helm.yaml 的 `KEEP_IMAGE_NAMESPACE` / `KEEP_IMAGE_ORIGINAL_TAG`（含 tag 回退到 chart 版本号）逻辑。
    - **chart**（PUSH_CHARTS）：`helm package .` 得 `.tgz` →

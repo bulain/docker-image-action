@@ -61,9 +61,6 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Install helm-images plugin
-        run: helm plugin install https://github.com/nikhilsbhat/helm-images --verify=false
-
       - name: Clone git-source charts, mirror images to ACR and push charts to TCR
         run: |
           set -e
@@ -120,7 +117,9 @@ jobs:
 
               # ---- 1. 解析 chart 引用的镜像并逐个搬运到 ACR ----
               if [ "$PUSH_IMAGES" = "true" ]; then
-                echo "helm images get $chart_dir"
+                echo "helm template $chart_dir 提取 image 字段"
+                # helm images get 只识别标准工作负载，认不出 Percona CR（PerconaServerMySQL）里的 image。
+                # 改用 helm template 渲染后提取所有 image: 字段值，对标准工作负载与 CR 都有效。
                 # awk '!seen[$0]++' 按原始字符串去重，保留原顺序
                 while read -r img; do
                     [[ -z "$img" ]] && continue
@@ -157,7 +156,12 @@ jobs:
                     docker push "$new_img"
                     # 逐个清理，控制磁盘
                     docker rmi "$img" "$new_img" || true
-                done < <(helm images get "$chart_dir" | awk '!seen[$0]++')
+                done < <(helm template "$chart_dir" 2>/dev/null \
+                    | grep -oE '^[[:space:]]*(image|initImage):[[:space:]]*.+' \
+                    | sed -E 's/^[[:space:]]*[a-zA-Z]+:[[:space:]]*//' \
+                    | tr -d '\042\047' \
+                    | grep -vE '^[[:space:]]*$' \
+                    | awk '!seen[$0]++')
               fi
 
               # ---- 2. package 并 push chart 本身到 TCR ----
