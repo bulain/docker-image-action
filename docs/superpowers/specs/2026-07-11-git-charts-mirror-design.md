@@ -77,11 +77,9 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
 
 ### 步骤
 
-1. **磁盘扩容**：percona operator 依赖镜像多且大，比照 `docker.yaml` 用
-   `easimon/maximize-build-space` 扩容并 restart docker。
-2. Checkout 本仓库 → `azure/setup-helm` → 装 `helm-images` 插件（同 helm.yaml）。
-3. 登录：`PUSH_IMAGES=true` 时 `docker login` ACR；`PUSH_CHARTS=true` 时 `helm registry login` TCR。
-4. 主脚本：`yq` 读 `git-charts.yaml`，遍历每条 `{repo, path, ref}`：
+1. Checkout 本仓库 → `azure/setup-helm` → 装 `helm-images` 插件（同 helm.yaml）。
+2. 登录：`PUSH_IMAGES=true` 时 `docker login` ACR；`PUSH_CHARTS=true` 时 `helm registry login` TCR。
+3. 主脚本：`yq` 读 `git-charts.yaml`，遍历每条 `{repo, path, ref}`：
    - `git clone --depth 1 --branch <ref> <repo>` → 进入 `<path>` 目录。
    - `helm dependency build`（若 chart 声明了子依赖）。
    - **镜像**（PUSH_IMAGES）：`helm images get . | awk '!seen[$0]++'` 去重后逐个
@@ -89,6 +87,10 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
      沿用 helm.yaml 的 `KEEP_IMAGE_NAMESPACE` / `KEEP_IMAGE_ORIGINAL_TAG`（含 tag 回退到 chart 版本号）逻辑。
    - **chart**（PUSH_CHARTS）：`helm package .` 得 `.tgz` →
      `helm push <tgz> oci://$TCR_REGISTRY_ENDPOINT/$TCR_REGISTRY_NS[/子路径] $HELM_HTTP_FLAG`。
+
+> 磁盘管理与 `helm.yaml` 一致：不使用 `easimon/maximize-build-space` 扩容，靠每个镜像
+> `push` 后立即 `docker rmi`、每条 chart 处理完 `rm -rf` clone 目录来控制占用。
+> （`maximize-build-space` 会压缩根盘，反而导致 `setup-helm` 装 helm 时 `ENOSPC`。）
 
 ### chart 子路径规则
 

@@ -55,34 +55,6 @@ jobs:
     name: Mirror Git-source Helm Charts
     runs-on: ubuntu-latest
     steps:
-      - name: Before freeing up disk space
-        run: |
-          echo "Before freeing up disk space"
-          echo "=============================================================================="
-          df -hT
-          echo "=============================================================================="
-
-      # 增加可用磁盘空间：percona operator/db 依赖镜像多且大
-      # root-reserve-mb 需留足根盘：helm 装在 /opt/hostedtoolcache、git clone 与 chart 包在 /home/runner/work，均在根盘
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 8192
-          swap-size-mb: 128
-          remove-dotnet: 'true'
-          remove-haskell: 'true'
-          build-mount-path: '/var/lib/docker/'
-
-      - name: Restart docker
-        run: sudo service docker restart
-
-      - name: Free up disk space complete
-        run: |
-          echo "Free up disk space complete"
-          echo "=============================================================================="
-          df -hT
-          echo "=============================================================================="
-
       - name: Checkout Code
         uses: actions/checkout@v5
 
