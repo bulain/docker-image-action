@@ -7,11 +7,11 @@ on:
 
 
 env:
-  ACR_REGISTRY_ENDPOINT: "${{ secrets.ACR_REGISTRY_ENDPOINT }}"
-  ACR_REGISTRY_NS: "${{ secrets.ACR_REGISTRY_NS }}"
+  ACR_REGISTRY_ENDPOINT: "${{ vars.ACR_REGISTRY_ENDPOINT }}"
+  ACR_REGISTRY_NS: "${{ vars.ACR_REGISTRY_NS }}"
   ACR_REGISTRY_AK: "${{ secrets.ACR_REGISTRY_AK }}"
   ACR_REGISTRY_SK: "${{ secrets.ACR_REGISTRY_SK }}"
-  ACR_PLAIN_HTTP: "${{ secrets.ACR_PLAIN_HTTP || 'true' }}"
+  ACR_PLAIN_HTTP: "${{ vars.ACR_PLAIN_HTTP || 'true' }}"
 
 jobs:
 

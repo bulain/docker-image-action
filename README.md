@@ -26,7 +26,7 @@
 
 **3 步搬运一个镜像 / Chart：**
 
-1. **配置 Secrets**（仅首次）：在仓库 `Settings → Secrets and variables → Actions` 配好 ACR / TCR 凭据，详见 [前置配置：GitHub Secrets](#前置配置github-secrets)。
+1. **配置 Secrets 与 Variables**（仅首次）：在仓库 `Settings → Secrets and variables → Actions` 配好 ACR / TCR 凭据与配置，详见 [前置配置：GitHub Secrets 与 Variables](#前置配置github-secrets-与-variables)。
 2. **编辑清单**：在 `docker.yaml`（镜像）或 `helm.yaml`（Chart）里，取消注释你要搬运的行，或新增一行。
 
    ```diff
@@ -40,27 +40,34 @@
 
 运行结束后，镜像 / Chart 就出现在你的私有 registry 里。最终路径规则见 [走查示例](#走查示例)。
 
-## 前置配置：GitHub Secrets
+## 前置配置：GitHub Secrets 与 Variables
 
-在仓库 `Settings → Secrets and variables → Actions` 添加以下 Secrets。
+在仓库 `Settings → Secrets and variables → Actions` 配置。**凭据（AK/SK）放 Secrets 标签页；域名、命名空间、明文 HTTP 开关放 Variables 标签页。**
 
-**阿里云 ACR（三条流程都用到）**
+### Secrets（凭据，敏感）
 
 | Secret | 用途 | 示例 |
 | --- | --- | --- |
-| `ACR_REGISTRY_ENDPOINT` | ACR 域名 | `registry.cn-hangzhou.aliyuncs.com` |
 | `ACR_REGISTRY_AK` | ACR 用户名 / AccessKey | `your-username` |
 | `ACR_REGISTRY_SK` | ACR 密码 / Secret | `your-password` |
+| `TCR_REGISTRY_AK` | TCR 用户名 | `your-username` |
+| `TCR_REGISTRY_SK` | TCR 密码 | `your-password` |
+
+### Variables（非敏感配置）
+
+**阿里云 ACR（三条流程都用到）**
+
+| Variable | 用途 | 示例 |
+| --- | --- | --- |
+| `ACR_REGISTRY_ENDPOINT` | ACR 域名 | `registry.cn-hangzhou.aliyuncs.com` |
 | `ACR_REGISTRY_NS` | 镜像统一命名空间（Docker 流程 + Helm/git Chart 引用镜像） | `my-namespace` |
 | `ACR_PLAIN_HTTP` | 可选。推送镜像到 ACR 是否走明文 HTTP（endpoint 为内网 HTTP registry 时用），未配置默认 `true` | `false` |
 
 **腾讯云 TCR（Helm 与 Git 源码 Chart 流程推 Chart 用到）**
 
-| Secret | 用途 | 示例 |
+| Variable | 用途 | 示例 |
 | --- | --- | --- |
 | `TCR_REGISTRY_ENDPOINT` | TCR 域名 | `my-ns.tencentcloudcr.com` |
-| `TCR_REGISTRY_AK` | TCR 用户名 | `your-username` |
-| `TCR_REGISTRY_SK` | TCR 密码 | `your-password` |
 | `TCR_REGISTRY_NS` | Chart 推送到的命名空间 | `charts` |
 | `TCR_PLAIN_HTTP` | 可选。`helm push` 到 TCR 是否走明文 HTTP（`--plain-http`），未配置默认 `true` | `false` |
 
@@ -131,7 +138,7 @@ charts:
 
 > Docker workflow 只读 `push_images` / `keep_image_namespace`，其余 chart 相关开关忽略。
 
-> 明文 HTTP 开关（`TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP`）由 Secrets 控制（不是 config.yaml），见上方 Secrets 表。
+> 明文 HTTP 开关（`TCR_PLAIN_HTTP` / `ACR_PLAIN_HTTP`）由 Variables 控制（不是 config.yaml），见上方 Variables 表。
 
 ## 走查示例
 
@@ -177,4 +184,4 @@ charts:
 - **某些 Chart `helm template` 渲染失败**：部分 Chart（如 Loki）模板渲染需要必填 values（如 `loki.storage.bucketNames.chunks`），未提供时解析镜像会报错（脚本已用 `2>/dev/null` 吞掉错误，仅表现为提取不到镜像、不中断）。此类 Chart 需在脚本中补 `--set` 传值，或单独处理。
 - **ACR 个人版不支持 Helm Chart**：这是 Chart 本身改推 TCR 的原因，镜像仍在 ACR。
 - **`push: master` 会自动触发**：只要清单或 workflow 变更推到 master，就会按默认开关跑一遍。不想自动跑时，注意提交内容或临时调整触发条件。
-- **凭据安全**：所有 registry 凭据走 GitHub Secrets，脚本中不硬编码。
+- **凭据安全**：registry 凭据（AK/SK）走 GitHub Secrets，域名/命名空间/开关走 GitHub Variables，脚本中均不硬编码。
