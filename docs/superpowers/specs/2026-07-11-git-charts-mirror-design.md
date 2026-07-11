@@ -31,11 +31,11 @@ charts:
   - repo: https://github.com/percona/percona-helm-charts.git
     path: charts/ps-operator
     ref: ps-operator-1.2.0
-    namespace: percona
+    namespace: percona/helm-charts
 ```
 
 - `ref` 用于 `git checkout`（支持分支/tag/commit）。
-- `namespace` 为 chart 推到 TCR 时的目标前缀（如 `percona` → `.../percona/ps-operator`），受 `KEEP_CHART_NAMESPACE` 控制。
+- `namespace` 为 chart 推到 TCR 时的目标前缀（可多段，如 `percona/helm-charts` → `.../percona/helm-charts/ps-operator`），受 `KEEP_CHART_NAMESPACE` 控制。
 - chart 版本号由 `helm package` 自动从 `Chart.yaml` 读取，**不在清单里重复写版本**。
 - 将来加 pg-operator、psmdb-operator 等只需追加数组项。
 - workflow 里用 `yq`（GitHub runner 预装）解析。
@@ -84,7 +84,7 @@ push 触发时 inputs 为空，靠 env 里的 `|| 'true'` / `|| 'false'` fallbac
 ### chart 子路径规则
 
 `KEEP_CHART_NAMESPACE=true` 时用清单里的 `namespace` 字段作子路径，
-chart 推到 `oci://$TCR/$TCR_NS/<namespace>/<chart名>`（如 `oci://$TCR/$TCR_NS/percona/ps-operator`，
+chart 推到 `oci://$TCR/$TCR_NS/<namespace>/<chart名>`（如 `oci://$TCR/$TCR_NS/percona/helm-charts/ps-operator`，
 chart 名由 `helm push` 从包名自动决定）；
 关闭则直推 `oci://$TCR/$TCR_NS`（丢前缀）。
 
