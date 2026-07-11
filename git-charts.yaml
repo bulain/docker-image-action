@@ -15,7 +15,11 @@ charts:
 #    path: charts/ps-db
 #    ref: ps-db-1.2.0
 #    namespace: percona/helm-charts
+#  - repo: https://github.com/nacos-group/nacos-k8s.git
+#    path: helm
+#    ref: v1.0.2
+#    namespace: nacos-group/helm-charts
   - repo: https://github.com/nacos-group/nacos-k8s.git
-    path: helm
+    path: operator/chart/nacos-operator
     ref: v1.0.2
     namespace: nacos-group/helm-charts
