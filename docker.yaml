@@ -74,7 +74,7 @@ images:
 
 #  - ghcr.io/valhalla/valhalla-scripted:3.6.2
 
-#  - victoriametrics/victoria-metrics:v1.146.0
+  - victoriametrics/victoria-metrics:v1.147.0
   - victoriametrics/vmalert:v1.147.0
   - victoriametrics/vmagent:v1.147.0
 #  - victoriametrics/victoria-logs:v1.51.0
