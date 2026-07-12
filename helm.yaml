@@ -28,3 +28,6 @@ charts:
 #  - oci://ghcr.io/ot-container-kit/charts/redis-cluster:0.17.4
 #  - oci://ghcr.io/ot-container-kit/charts/redis-replication:0.17.0
 #  - oci://ghcr.io/ot-container-kit/charts/redis:0.16.9
+
+#   https://github.com/grafana/alloy-operator
+  - oci://ghcr.io/grafana/helm-charts/alloy-operator:0.6.0
