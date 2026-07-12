@@ -74,16 +74,19 @@ images:
 
 #  - ghcr.io/valhalla/valhalla-scripted:3.6.2
 
-  - victoriametrics/victoria-metrics:v1.147.0
-  - victoriametrics/vmalert:v1.147.0
-  - victoriametrics/vmagent:v1.147.0
-#  - victoriametrics/victoria-logs:v1.51.0
-#  - victoriametrics/vlagent:v1.51.0
 #  - victoriametrics/operator:v0.73.1
 #  - victoriametrics/operator:config-reloader-v0.73.1
+#  - victoriametrics/vminsert:v1.147.0-cluster
+#  - victoriametrics/vmselect:v1.147.0-cluster
+#  - victoriametrics/vmstorage:v1.147.0-cluster
+#  - victoriametrics/victoria-metrics:v1.147.0
+#  - victoriametrics/vmalert:v1.147.0
+#  - victoriametrics/vmagent:v1.147.0
+#  - victoriametrics/victoria-logs:v1.51.0
+#  - victoriametrics/vlagent:v1.51.0
 
 #  - prom/prometheus:v3.5.4
-#  - prom/alertmanager:v0.33.0
+  - prom/alertmanager:v0.31.0
 #  - prom/node-exporter:v1.11.1
 #  - oliver006/redis_exporter:v1.86.0-alpine
 #  - bougou/alertmanager-webhook-adapter:v1.1.11
