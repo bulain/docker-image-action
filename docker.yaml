@@ -83,7 +83,7 @@ images:
 #  - victoriametrics/vmalert:v1.147.0
 #  - victoriametrics/vmagent:v1.147.0
 #  - victoriametrics/victoria-logs:v1.51.0
-  - victoriametrics/vlagent:v1.51.0
+#  - victoriametrics/vlagent:v1.51.0
 
 #  - prom/prometheus:v3.5.4
 #  - prom/alertmanager:v0.31.0
@@ -108,4 +108,4 @@ images:
 #  - quay.io/prometheus-operator/prometheus-config-reloader:v0.92.1
 
 #  https://github.com/rabbitmq/cluster-operator
-#  - ghcr.io/rabbitmq/cluster-operator:2.22.1
+  - ghcr.io/rabbitmq/cluster-operator:sha-c7a6ae2
