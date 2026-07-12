@@ -75,11 +75,12 @@ images:
 #  - ghcr.io/valhalla/valhalla-scripted:3.6.2
 
 #  - victoriametrics/victoria-metrics:v1.146.0
-#  - victoriametrics/vmalert:v1.146.0
-#  - victoriametrics/vmagent:v1.146.0
+  - victoriametrics/vmalert:v1.147.0
+  - victoriametrics/vmagent:v1.147.0
 #  - victoriametrics/victoria-logs:v1.51.0
 #  - victoriametrics/vlagent:v1.51.0
-  - victoriametrics/operator:config-reloader-v0.73.1
+#  - victoriametrics/operator:v0.73.1
+#  - victoriametrics/operator:config-reloader-v0.73.1
 
 #  - prom/prometheus:v3.5.4
 #  - prom/alertmanager:v0.33.0
