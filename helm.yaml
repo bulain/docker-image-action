@@ -17,7 +17,7 @@ charts:
 #   https://github.com/prometheus-community/helm-charts
 #  - oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack:87.12.3
 #  - oci://ghcr.io/prometheus-community/charts/prometheus:29.14.0
-  - oci://ghcr.io/prometheus-community/charts/kube-state-metrics:7.8.1
+#  - oci://ghcr.io/prometheus-community/charts/kube-state-metrics:7.8.1
 
 #   https://github.com/grafana-community/helm-charts
 #  - oci://ghcr.io/grafana-community/helm-charts/grafana:12.7.2

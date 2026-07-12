@@ -5,6 +5,7 @@
 images:
 #  - busybox:1.37-musl
 #  - busybox:1.37-glibc
+  - busybox:1.38.0
 
 #  - alpine:3.23
 
