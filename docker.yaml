@@ -112,4 +112,4 @@ images:
 #  - ghcr.io/rabbitmq/cluster-operator:2.22.1
 
 #  https://github.com/percona/orchestrator
-  - percona/percona-orchestrator:3.2.6
+  - percona/percona-orchestrator:3.2.6-22
