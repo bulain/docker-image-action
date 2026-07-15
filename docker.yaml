@@ -111,5 +111,5 @@ images:
 #  https://github.com/rabbitmq/cluster-operator
 #  - ghcr.io/rabbitmq/cluster-operator:2.22.1
 
-#  https://github.com/openark/orchestrator
-  - vitess/orchestrator:v3.2.6
+#  https://github.com/percona/orchestrator
+  - percona/percona-orchestrator:3.2.6
