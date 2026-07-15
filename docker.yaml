@@ -112,4 +112,4 @@ images:
 #  - ghcr.io/rabbitmq/cluster-operator:2.22.1
 
 #  https://github.com/openark/orchestrator
-  - ghcr.io/openark/orchestrator:v3.2.6
+  - vitess/orchestrator:v3.2.6
