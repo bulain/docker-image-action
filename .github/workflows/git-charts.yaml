@@ -43,6 +43,20 @@ jobs:
           [ "$KEEP_IMAGE_NAMESPACE" = "false" ] || KEEP_IMAGE_NAMESPACE="true"
           KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace' config.yaml)
           [ "$KEEP_CHART_NAMESPACE" = "false" ] || KEEP_CHART_NAMESPACE="true"
+
+          # 两开关皆关时空操作
+          if [ "$PUSH_IMAGES" != "true" ] && [ "$PUSH_CHARTS" != "true" ]; then
+              echo "跳过（push_charts 与 push_images 均关闭）"
+              exit 0
+          fi
+
+          # 清单为空时空操作（避免无谓登录 registry）
+          count=$(yq '.charts | length' git-charts.yaml)
+          if [ "$count" = "0" ] || [ -z "$count" ]; then
+              echo "跳过（git-charts.yaml 的 charts 列表为空）"
+              exit 0
+          fi
+
           # 镜像推送到 ACR（仅在推送镜像时登录）
           if [ "$PUSH_IMAGES" = "true" ]; then
               # ACR_PLAIN_HTTP=true 时把 ACR endpoint 配进 insecure-registries，让 docker push 走明文 HTTP
@@ -63,16 +77,9 @@ jobs:
               helm registry login "$TCR_REGISTRY_ENDPOINT" -u "$TCR_REGISTRY_AK" -p "$TCR_REGISTRY_SK" $HELM_HTTP_FLAG
           fi
 
-          # 两开关皆关时空操作
-          if [ "$PUSH_IMAGES" != "true" ] && [ "$PUSH_CHARTS" != "true" ]; then
-              echo "跳过（push_charts 与 push_images 均关闭）"
-              exit 0
-          fi
-
           mkdir -p ./workspace
 
           # 逐条读取清单（用进程替换避免子 shell，让 set -e 在循环体内生效）
-          count=$(yq '.charts | length' git-charts.yaml)
           for i in $(seq 0 $((count - 1))); do
               repo=$(yq ".charts[$i].repo" git-charts.yaml)
               path=$(yq ".charts[$i].path" git-charts.yaml)

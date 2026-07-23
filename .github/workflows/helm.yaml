@@ -43,6 +43,20 @@ jobs:
           [ "$KEEP_IMAGE_NAMESPACE" = "false" ] || KEEP_IMAGE_NAMESPACE="true"
           KEEP_CHART_NAMESPACE=$(yq '.keep_chart_namespace' config.yaml)
           [ "$KEEP_CHART_NAMESPACE" = "false" ] || KEEP_CHART_NAMESPACE="true"
+
+          # 两开关皆关时空操作
+          if [ "$PUSH_IMAGES" != "true" ] && [ "$PUSH_CHARTS" != "true" ]; then
+              echo "跳过（push_charts 与 push_images 均关闭）"
+              exit 0
+          fi
+
+          # 清单为空时空操作（避免无谓登录 registry）
+          count=$(yq '.charts | length' helm.yaml)
+          if [ "$count" = "0" ] || [ -z "$count" ]; then
+              echo "跳过（helm.yaml 的 charts 列表为空）"
+              exit 0
+          fi
+
           # 镜像推送到 ACR（仅在推送镜像时登录）
           if [ "$PUSH_IMAGES" = "true" ]; then
               # ACR_PLAIN_HTTP=true 时把 ACR endpoint 配进 insecure-registries，让 docker push 走明文 HTTP
@@ -66,7 +80,6 @@ jobs:
           mkdir -p ./charts
 
           # 逐条读取 helm.yaml 清单的 charts 数组（注释掉的条目 yq 读不到，天然=禁用）
-          count=$(yq '.charts | length' helm.yaml)
           for i in $(seq 0 $((count - 1))); do
               line=$(yq ".charts[$i]" helm.yaml)
 
@@ -84,12 +97,6 @@ jobs:
               echo "=============================================================================="
               echo "处理 chart: $ref --version $tag"
               echo "=============================================================================="
-
-              # 两开关皆关时空操作
-              if [ "$PUSH_IMAGES" != "true" ] && [ "$PUSH_CHARTS" != "true" ]; then
-                  echo "跳过（push_charts 与 push_images 均关闭）"
-                  continue
-              fi
 
               # ---- 1. 解析 chart 引用的镜像并逐个搬运 ----
               if [ "$PUSH_IMAGES" = "true" ]; then

@@ -74,10 +74,17 @@ jobs:
               echo "跳过（push_images 关闭）"
               exit 0
           fi
+
+          # 清单为空时空操作（避免无谓登录 registry）
+          count=$(yq '.images | length' docker.yaml)
+          if [ "$count" = "0" ] || [ -z "$count" ]; then
+              echo "跳过（docker.yaml 的 images 列表为空）"
+              exit 0
+          fi
+
           docker login -u $ACR_REGISTRY_AK -p $ACR_REGISTRY_SK $ACR_REGISTRY_ENDPOINT
 
           # 逐条读取 docker.yaml 清单的 images 数组（注释掉的条目 yq 读不到，天然=禁用）
-          count=$(yq '.images | length' docker.yaml)
           for i in $(seq 0 $((count - 1))); do
               line=$(yq ".images[$i]" docker.yaml)
 
