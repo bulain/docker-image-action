@@ -53,7 +53,7 @@ images:
 #  - percona/percona-xtrabackup:8.0
 #  - percona/percona-xtrabackup:8.4
 
-#  - onlyoffice/damengdb:8.1.2
+  - onlyoffice/damengdb:8.1.2
 #  - heavenzhi1997/kingbase_se_single:v008r006c008b0020
 #  - heavenzhi1997/kingbase_se_single:v009r001c001b0030
 #  - apecloud/kingbase:v009r003c011b0003
@@ -112,4 +112,7 @@ images:
 #  - ghcr.io/rabbitmq/cluster-operator:2.22.1
 
 #  https://github.com/percona/orchestrator
-  - percona/percona-orchestrator:3.2.6-22
+#  - percona/percona-orchestrator:3.2.6-22
+
+#  https://github.com/sysown/proxysql
+#  - proxysql/proxysql:3.0.9
